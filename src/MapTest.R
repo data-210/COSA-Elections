@@ -6,7 +6,8 @@ library(RColorBrewer)
 
 
 # Load shapefile
-precincts <- st_read('Bexar_County_Voter_Precincts.shp')
+precincts <- st_read('../shapefiles/Bexar_County_Voter_Precincts.shp')
+
 print(st_geometry(precincts))
 
 # Transform to WGS84
@@ -14,7 +15,7 @@ precincts <- st_transform(precincts, crs = 4326)
 View(precincts)
 
 # Load City Council Shapefile and transform
-districts <- st_read('RedistrictedCouncilDistricts2022.shp')
+districts <- st_read('../shapefiles/RedistrictedCouncilDistricts2022.shp')
 districts <- st_transform(districts, crs = 4326)
 View(districts)
 
@@ -40,11 +41,6 @@ leaflet(data = precincts) %>%
     fillOpacity = 0.5,
     label = ~District,
     labelOptions = labelOptions(noHide = TRUE)
-    # highlight = highlightOptions(
-    #   weight = 4,
-    #   color = 'orange',
-    #   bringToFront = TRUE
-    # )
   ) %>%
   # Voting Precincts
   addPolygons(

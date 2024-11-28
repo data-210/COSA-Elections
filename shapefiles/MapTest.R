@@ -27,6 +27,9 @@ district_palette <- colorFactor(
 # Basic Map
 leaflet(data = precincts) %>%
   addTiles()%>%
+  setView(lng = -98.4936,
+          lat = 29.4241,
+          zoom = 11) %>%
   # City Council Districts
   addPolygons(
     data = districts,

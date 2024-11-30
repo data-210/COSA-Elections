@@ -3,7 +3,7 @@ library(sf)
 library(leaflet)
 library(tidyverse)
 library(RColorBrewer)
-getwd()
+
 # Load shapefile
 precincts <- st_read('../shapefiles/Bexar_County_Voter_Precincts.shp')
 
@@ -45,6 +45,9 @@ precincts$NAME <- as.integer(precincts$NAME)
 # Join election data to precinct shapefile
 precincts_with_results <- precincts %>%
   left_join(election_summary, by=c("NAME" = "Precinct"))
+View(precincts_with_results)
+precincts_with_results <- precincts_with_results %>%
+  filter(!is.na(Results))
 
 # Map
 leaflet(data = precincts_with_results) %>%
@@ -72,7 +75,7 @@ leaflet(data = precincts_with_results) %>%
     fillOpacity = 0.5,
     popup = ~paste(
       "<strong>Precinct:</strong>", NAME, "<br>",
-      "<strong>Election Resulst:</strong><br>", Results
+      "<strong>Election Results:</strong><br>", Results
     ),
     highlight=highlightOptions(
       color = 'red',

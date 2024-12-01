@@ -39,9 +39,11 @@ mayor_results <- may2023election %>%
       Candidate, ": ", `Total Votes`, " votes (", round(`Vote Percentage`, 1), "%)",
       collapse = "<br>"
     ), 
+    MaxVoteShare = max(`Vote Percentage`, na.rm = TRUE),
+    Winner = Candidate[which.max(`Vote Percentage`)],
     .groups = 'drop'
   )
-
+View(mayor_results)
 ## Join Prep
 # Ensure cols match
 precincts$NAME <- as.integer(precincts$NAME)
@@ -49,7 +51,13 @@ precincts$NAME <- as.integer(precincts$NAME)
 # Join mayoral results to precincts
 mayor_results_precincts <- precincts %>%
   left_join(mayor_results, by = c("NAME" = "Precinct")) %>%
-  filter(!is.na(Results))
+  filter(!is.na(MaxVoteShare))
+
+# Heatmap color palette
+heatmap_palette <- colorNumeric(
+  palette = c("blue", "purple", "red"),  # Gradient: Blue -> Purple -> Red
+  domain = precincts_with_results$MaxVoteShare
+)
 
 # Map
 leaflet(data = mayor_results_precincts) %>%
@@ -74,11 +82,13 @@ leaflet(data = mayor_results_precincts) %>%
     color = 'black',
     weight = 0.5,
     opacity = 0.8,
-    fillColor = 'white',
-    fillOpacity = 0.5,
+    fillColor = ~heatmap_palette(MaxVoteShare),
+    fillOpacity = 0.7,
     popup = ~paste(
-      "<strong>Precinct:</strong>", NAME, "<br>",
-      "<strong>Election Results:</strong><br>", Results
+      "<strong>Precinct:</strong>", NAME, "<br><br>",
+      "<strong>Winning Candidate:</strong> ", Winner, "<br>",
+      "<strong>Max Vote Share:</strong> ", round(MaxVoteShare, 1), "%", "<br><br>",
+      "<strong>All Results:</strong><br>", Results
     ),
     highlight=highlightOptions(
       color = 'red',
@@ -100,5 +110,12 @@ leaflet(data = mayor_results_precincts) %>%
     options = pathOptions(
       cursor = 'pointer'
     )
+  ) %>%
+  addLegend(
+    "bottomright",
+    pal = heatmap_palette,
+    values = mayor_results_precincts$MaxVoteShare,
+    title = "Vote Share (%)",
+    opacity = 1
   )
 

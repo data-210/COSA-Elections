@@ -109,8 +109,8 @@ leaflet(data = mayor_results_precincts) %>%
   addPolygons(
     data = districts,
     color = 'black',
-    weight = 2.5,
-    opacity = 1,
+    weight = 6,
+    opacity = 2,
     fillColor = 'white',
     #fillColor =  ~district_palette(District),
     fillOpacity = 0.5,
@@ -169,11 +169,11 @@ leaflet(data = council_results_precincts) %>%
   addPolygons(
     data = districts,
     color = 'black',
-    weight = 1,
-    opacity = 1,
+    weight = 6,
+    opacity = 2,
     #fillColor = 'white',
-    fillColor = ~district_palette(District),
-    fillOpacity = 0.5,
+    fillColor = 'white',
+    fillOpacity = 0,
     label = ~District,
     labelOptions = labelOptions(noHide = TRUE)
   ) %>%
@@ -185,6 +185,7 @@ leaflet(data = council_results_precincts) %>%
     fillColor = ~WinnerColor,
     fillOpacity = 0.7,
     popup = ~paste(
+      "<strong>District:</strong>", District, "<br>",
       "<strong>Precinct:</strong>", NAME, "<br><br>",
       "<strong>Winning Candidate:</strong> ", Winner, "<br>",
       "<strong>Max Vote Share:</strong> ", round(MaxVoteShare, 1), "%", "<br><br>",

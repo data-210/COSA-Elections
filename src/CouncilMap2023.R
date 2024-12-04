@@ -1,3 +1,4 @@
+### City Council Election Map 2023
 ## Mayoral Map
 ### May 2023 General Election Mapping
 library(sf)
@@ -29,20 +30,14 @@ district_palette <- colorFactor(
 may2023election <- read_csv("~/Documents/Repos/COSA-Elections/data/satx2023_generalelection_002.csv")
 View(may2023election)
 
-# Get all unique candidates
-all_candidates <- unique(may2023election$Candidate)
-
-# Assign unique color to each candidate
-candidate_palette <- colorFactor(
-  palette = brewer.pal(min(length(all_candidates), 12), 'Set3'),
-  domain = all_candidates
-)
-
 # Aggregate Election Data by Precinct
-mayor_results <- may2023election %>%
-  filter(Race == 'Mayor') %>%
+council_results <- may2023election %>%
+  filter(str_detect(Race, 'District')) %>%
+  mutate(
+    District = as.numeric(str_extract(Race, "\\d+"))
+  ) %>%
   arrange(Precinct, desc(`Total Votes`)) %>%
-  group_by(Precinct) %>%
+  group_by(Precinct, District) %>%
   summarise(
     Results = paste(
       Candidate, ": ", `Total Votes`, " votes (", round(`Vote Percentage`, 1), "%)",
@@ -51,19 +46,17 @@ mayor_results <- may2023election %>%
     MaxVoteShare = max(`Vote Percentage`, na.rm = TRUE),
     Winner = Candidate[which.max(`Vote Percentage`)],
     .groups = 'drop'
-  ) %>%
-  mutate(
-    WinnerColor = candidate_palette(Winner)
   )
-View(mayor_results)
+View(council_results)
 ## Join Prep
 # Ensure cols match
 precincts$NAME <- as.integer(precincts$NAME)
 
 # Join mayoral results to precincts
-mayor_results_precincts <- precincts %>%
-  left_join(mayor_results, by = c("NAME" = "Precinct")) %>%
+council_results_precincts <- precincts %>%
+  left_join(council_results, by = c("NAME" = "Precinct")) %>%
   filter(!is.na(MaxVoteShare))
+View(council_results_precincts)
 
 # Heatmap color palette
 heatmap_palette <- colorNumeric(
@@ -71,11 +64,8 @@ heatmap_palette <- colorNumeric(
   domain = precincts_with_results$MaxVoteShare
 )
 
-
-
-
 # Map
-leaflet(data = mayor_results_precincts) %>%
+leaflet(data = council_results_precincts) %>%
   addTiles() %>%
   setView(lng = -98.4936,
           lat = 29.4241,
@@ -92,7 +82,7 @@ leaflet(data = mayor_results_precincts) %>%
     label = ~District,
     labelOptions = labelOptions(noHide = TRUE)
   ) %>%
-  # Precincts with mayoral results
+  # Precincts with council results
   addPolygons(
     color = 'black',
     weight = 0.5,

@@ -1,4 +1,4 @@
-## Mayoral Map
+### Mayor & Council Map
 ### May 2023 General Election Mapping
 library(sf)
 library(leaflet)
@@ -29,16 +29,18 @@ district_palette <- colorFactor(
 may2023election <- read_csv("~/Documents/Repos/COSA-Elections/data/satx2023_generalelection_002.csv")
 View(may2023election)
 
-# Get all unique candidates
-all_candidates <- unique(may2023election$Candidate)
-
-# Assign unique color to each candidate
-candidate_palette <- colorFactor(
-  palette = brewer.pal(min(length(all_candidates), 12), 'Set3'),
-  domain = all_candidates
+# Get Mayoral candidates & assign palette color
+mayoral_candidates <- may2023election %>%
+  filter(Race == 'Mayor') %>%
+  pull(Candidate) %>%
+  unique()
+mayoral_palette <- colorFactor(
+  palette = brewer.pal(min(length(mayoral_candidates),12), "Paired"),
+  domain = mayoral_candidates
 )
 
-# Aggregate Election Data by Precinct
+
+# Aggregate Election Data by Precinct - Mayor
 mayor_results <- may2023election %>%
   filter(Race == 'Mayor') %>%
   arrange(Precinct, desc(`Total Votes`)) %>%
@@ -56,6 +58,28 @@ mayor_results <- may2023election %>%
     WinnerColor = candidate_palette(Winner)
   )
 View(mayor_results)
+
+# Aggregate Election Data by Precinct - Council
+council_results <- may2023election %>%
+  filter(str_detect(Race, 'District')) %>%
+  mutate(
+    District = as.numeric(str_extract(Race, "\\d+"))
+  ) %>%
+  arrange(Precinct, desc(`Total Votes`)) %>%
+  group_by(Precinct, District) %>%
+  summarise(
+    Results = paste(
+      Candidate, ": ", `Total Votes`, " votes (", round(`Vote Percentage`, 1), "%)",
+      collapse = "<br>"
+    ), 
+    MaxVoteShare = max(`Vote Percentage`, na.rm = TRUE),
+    Winner = Candidate[which.max(`Vote Percentage`)],
+    .groups = 'drop'
+  ) %>%
+  mutate(
+    WinnerColor = candidate_palette(Winner)
+  )
+
 ## Join Prep
 # Ensure cols match
 precincts$NAME <- as.integer(precincts$NAME)
@@ -65,16 +89,13 @@ mayor_results_precincts <- precincts %>%
   left_join(mayor_results, by = c("NAME" = "Precinct")) %>%
   filter(!is.na(MaxVoteShare))
 
-# Heatmap color palette
-heatmap_palette <- colorNumeric(
-  palette = c("blue", "purple", "red"),  # Gradient: Blue -> Purple -> Red
-  domain = precincts_with_results$MaxVoteShare
-)
+# Join mayoral results to precincts
+council_results_precincts <- precincts %>%
+  left_join(council_results, by = c("NAME" = "Precinct")) %>%
+  filter(!is.na(MaxVoteShare))
 
 
-
-
-# Map
+# Mayor Map
 leaflet(data = mayor_results_precincts) %>%
   addTiles() %>%
   setView(lng = -98.4936,
@@ -86,8 +107,8 @@ leaflet(data = mayor_results_precincts) %>%
     color = 'black',
     weight = 1,
     opacity = 1,
-    #fillColor = 'white',
-    fillColor = ~district_palette(District),
+    fillColor = 'white',
+    #fillColor =  ~district_palette(District),
     fillOpacity = 0.5,
     label = ~District,
     labelOptions = labelOptions(noHide = TRUE)
@@ -97,8 +118,8 @@ leaflet(data = mayor_results_precincts) %>%
     color = 'black',
     weight = 0.5,
     opacity = 0.8,
-    fillColor = ~heatmap_palette(MaxVoteShare),
-    fillOpacity = 0.7,
+    fillColor = ~WinnerColor,
+    fillOpacity = 1,
     popup = ~paste(
       "<strong>Precinct:</strong>", NAME, "<br><br>",
       "<strong>Winning Candidate:</strong> ", Winner, "<br>",
@@ -128,9 +149,9 @@ leaflet(data = mayor_results_precincts) %>%
   ) %>%
   addLegend(
     "bottomright",
-    pal = heatmap_palette,
-    values = mayor_results_precincts$MaxVoteShare,
-    title = "Vote Share (%)",
+    pal = mayoral_palette,
+    values = mayoral_candidates,
+    title = "Winning Candidate",
     opacity = 1
   )
 

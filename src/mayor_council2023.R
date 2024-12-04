@@ -29,17 +29,6 @@ district_palette <- colorFactor(
 may2023election <- read_csv("~/Documents/Repos/COSA-Elections/data/satx2023_generalelection_002.csv")
 View(may2023election)
 
-# Get Mayoral candidates & assign palette color
-mayoral_candidates <- may2023election %>%
-  filter(Race == 'Mayor') %>%
-  pull(Candidate) %>%
-  unique()
-mayoral_palette <- colorFactor(
-  palette = brewer.pal(min(length(mayoral_candidates),12), "Paired"),
-  domain = mayoral_candidates
-)
-
-
 # Aggregate Election Data by Precinct - Mayor
 mayor_results <- may2023election %>%
   filter(Race == 'Mayor') %>%
@@ -59,6 +48,15 @@ mayor_results <- may2023election %>%
   )
 View(mayor_results)
 
+# Assign colors to precinct winners - Mayoral
+mayoral_winners <- unique(mayor_results$Winner)
+winner_palette_mayor <- colorFactor(
+  palette = brewer.pal(min(length(mayoral_winners), 12),"Set3"),
+  domain = mayoral_winners
+)
+mayor_results <- mayor_results %>%
+  mutate(WinnerColor = winner_palette_mayor(Winner))
+
 # Aggregate Election Data by Precinct - Council
 council_results <- may2023election %>%
   filter(str_detect(Race, 'District')) %>%
@@ -75,10 +73,16 @@ council_results <- may2023election %>%
     MaxVoteShare = max(`Vote Percentage`, na.rm = TRUE),
     Winner = Candidate[which.max(`Vote Percentage`)],
     .groups = 'drop'
-  ) %>%
-  mutate(
-    WinnerColor = candidate_palette(Winner)
-  )
+  ) 
+
+# Assign distinct color for each precinct winner
+winners <- unique(council_results$Winner)
+winner_palette <- colorFactor(
+  palette = brewer.pal(min(length(winners), 12), "Set3"),
+  domain = winners
+)
+council_results <- council_results %>%
+  mutate(WinnerColor = winner_palette(Winner))
 
 ## Join Prep
 # Ensure cols match
@@ -87,12 +91,12 @@ precincts$NAME <- as.integer(precincts$NAME)
 # Join mayoral results to precincts
 mayor_results_precincts <- precincts %>%
   left_join(mayor_results, by = c("NAME" = "Precinct")) %>%
-  filter(!is.na(MaxVoteShare))
+  filter(!is.na(WinnerColor))
 
 # Join mayoral results to precincts
 council_results_precincts <- precincts %>%
   left_join(council_results, by = c("NAME" = "Precinct")) %>%
-  filter(!is.na(MaxVoteShare))
+  filter(!is.na(WinnerColor))
 
 
 # Mayor Map
@@ -105,7 +109,7 @@ leaflet(data = mayor_results_precincts) %>%
   addPolygons(
     data = districts,
     color = 'black',
-    weight = 1,
+    weight = 2.5,
     opacity = 1,
     fillColor = 'white',
     #fillColor =  ~district_palette(District),
@@ -149,9 +153,68 @@ leaflet(data = mayor_results_precincts) %>%
   ) %>%
   addLegend(
     "bottomright",
-    pal = mayoral_palette,
-    values = mayoral_candidates,
+    pal = winner_palette_mayor,
+    values = unique(mayor_results$Winner),
     title = "Winning Candidate",
     opacity = 1
   )
 
+# Map - City Council
+leaflet(data = council_results_precincts) %>%
+  addTiles() %>%
+  setView(lng = -98.4936,
+          lat = 29.4241,
+          zoom = 11) %>%
+  # City Council Districts
+  addPolygons(
+    data = districts,
+    color = 'black',
+    weight = 1,
+    opacity = 1,
+    #fillColor = 'white',
+    fillColor = ~district_palette(District),
+    fillOpacity = 0.5,
+    label = ~District,
+    labelOptions = labelOptions(noHide = TRUE)
+  ) %>%
+  # Precincts with council results
+  addPolygons(
+    color = 'black',
+    weight = 0.5,
+    opacity = 0.8,
+    fillColor = ~WinnerColor,
+    fillOpacity = 0.7,
+    popup = ~paste(
+      "<strong>Precinct:</strong>", NAME, "<br><br>",
+      "<strong>Winning Candidate:</strong> ", Winner, "<br>",
+      "<strong>Max Vote Share:</strong> ", round(MaxVoteShare, 1), "%", "<br><br>",
+      "<strong>All Results:</strong><br>", Results
+    ),
+    highlight=highlightOptions(
+      color = 'red',
+      weight = 2,
+      fillOpacity = 0.7,
+      bringToFront = TRUE
+    ),
+    label = ~NAME,
+    labelOptions = labelOptions(
+      style = list('color' = 'black', 'font-weight'='bold',
+                   'background-color' = 'white',
+                   'padding' = '5px',
+                   'border-radius'= '3px',
+                   'box-shadow' = '3px 3px rgba(0,0,0,0.25'),
+      textOnly = TRUE,
+      direction = 'right',
+      opacity = 0.9
+    ),
+    options = pathOptions(
+      cursor = 'pointer'
+    )
+  ) %>%
+  addLegend(
+    "bottomright",
+    pal = winner_palette,
+    values = unique(council_results$Winner),
+    title = "Winning Candidates",
+    opacity = 1
+  )

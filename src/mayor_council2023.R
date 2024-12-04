@@ -93,6 +93,7 @@ mayor_results_precincts <- precincts %>%
   left_join(mayor_results, by = c("NAME" = "Precinct")) %>%
   filter(!is.na(WinnerColor))
 
+
 # Join mayoral results to precincts
 council_results_precincts <- precincts %>%
   left_join(council_results, by = c("NAME" = "Precinct")) %>%

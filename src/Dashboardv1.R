@@ -4,13 +4,13 @@ library(leaflet)
 library(tidyverse)
 library(sf)
 library(RColorBrewer)
-install.packages("bs4Dash")
-library(bs4Dash)
+library(shinydashboard)
 
 # Load & Pre-process Data
 precincts <- st_read('../shapefiles/Bexar_County_Voter_Precincts.shp') %>%
   st_transform(crs = 4326)
 View(precincts)
+precincts$NAME <- as.integer(precincts$NAME)
 
 districts <- st_read('../shapefiles/RedistrictedCouncilDistricts2022.shp') %>%
   st_transform(crs = 4326)
@@ -22,17 +22,20 @@ View(may2023election)
 
 # Aggregate Mayor's race results
 mayor_results <- may2023election %>%
-  filter(Race == "Mayor") %>%
+  filter(Race == 'Mayor') %>%
   arrange(Precinct, desc(`Total Votes`)) %>%
   group_by(Precinct, ElectionYear) %>%
   summarise(
-    Winner = Candidate[which.max(`Total Votes`)],
-    MaxVoteShare = max(`Vote Percentage`, na.rm = TRUE),
     Results = paste(
-      Candidate, ": ", `Total Votes`, " votes (", round(`Vote Percentage`,1), "%)",
+      Candidate, ": ", `Total Votes`, " votes (", round(`Vote Percentage`, 1), "%)",
       collapse = "<br>"
-    ),
-    .groups = "drop"
+    ), 
+    MaxVoteShare = max(`Vote Percentage`, na.rm = TRUE),
+    Winner = Candidate[which.max(`Vote Percentage`)],
+    .groups = 'drop'
+  ) %>%
+  mutate(
+    WinnerColor = mayoral_palette(Winner)
   )
 mayoral_winners = unique(mayor_results$Winner)
 mayoral_palette = colorFactor(
@@ -42,19 +45,22 @@ mayoral_palette = colorFactor(
 
 # Aggregate City Council results
 council_results <- may2023election %>%
-  filter(str_detect(Race, "District")) %>%
-  mutate(District = as.numeric(str_extract(Race, "\\d+"))) %>%
+  filter(str_detect(Race, 'District')) %>%
+  mutate(
+    District = as.numeric(str_extract(Race, "\\d+"))
+  ) %>%
   arrange(Precinct, desc(`Total Votes`)) %>%
   group_by(Precinct, District, ElectionYear) %>%
   summarise(
-    Winner = Candidate[which.max(`Total Votes`)],
-    MaxVoteShare = max(`Vote Percentage`, na.rm = TRUE),
     Results = paste(
-      Candidate, ": ", `Total Votes`, " votes (", round(`Vote Percentage`,1), "%)",
+      Candidate, ": ", `Total Votes`, " votes (", round(`Vote Percentage`, 1), "%)",
       collapse = "<br>"
-    ),
-    .groups = "drop"
-  )
+    ), 
+    MaxVoteShare = max(`Vote Percentage`, na.rm = TRUE),
+    Winner = Candidate[which.max(`Vote Percentage`)],
+    .groups = 'drop'
+  ) %>%
+  mutate(WinnerColor = council_palette(Winner))
 council_winners = unique(council_results$Winner)
 council_palette = colorFactor(
   palette = brewer.pal(min(length(council_winners), 12), "Set3"),
@@ -62,48 +68,206 @@ council_palette = colorFactor(
 )
 
 ## UI ##
-ui <- bs4DashPage(
-  title = "San Antonio Election Results",
-  header = bs4DashNavbar(
-    skin = "dark",
-    title = "Election Results Dashboard",
-    compact = TRUE
-  ),
-  sidebar = bs4DashSidebar(
-    skin = 'dark',
-    status = 'primary',
-    title = 'Filters',
-    brandColor = 'primary',
-    selectInput('electionYear', "Select Election Year:",
-                choices = unique(may2023election$ElectionYear), selected = 2023),
-    conditionalPanel(
-      condition = "input.tab == 'Council Results'",
-      selectInput('councilDistrict', "Select Council District:",
-                  choices = c("All", 1:10))
+ui <- dashboardPage(
+  dashboardHeader(title = "San Antonio Municipal Election Results"),
+  dashboardSidebar(
+    sidebarMenu(
+      menuItem("Mayoral Race", tabName = "mayor", icon = icon("user-tie")),
+      menuItem("City Council Race", tabName = "council", icon = icon("users")),
+      selectInput("electionYear", "Select Election Year:",
+                  choices = unique(mayor_results$ElectionYear), selected = 2023),
+      conditionalPanel(
+        condition = "input.tab === 'council'",
+        selectInput("councilDistrict", "Select Council District:",
+                    choices = c("All", unique(council_results$District)))
+      )
     )
   ),
-  body = bs4DashBody(
-    bs4TabItems(
-      bs4TabItem(
+  dashboardBody(
+    tabItems(
+      # Mayoral Race Tab
+      tabItem(
         tabName = "mayor",
-        bs4Card(
-          title = "Mayor's Race Results",
-          status = "primary",
-          width = 12,
-          leafletOutput("mayorMap", height = 600)
+        fluidRow(
+          box(
+            title = "Mayoral Race Results",
+            status = "primary",
+            solidHeader = TRUE,
+            width = 12,
+            leafletOutput("mayorMap", height = 600)
+          )
         )
       ),
-      bs4TabItem(
+      # Council Results Tab
+      tabItem(
         tabName = "council",
-        bs4Card(
-          title = "Council Results",
-          status = "primary",
-          width = 12,
-          leafletOutput("councilMap", height = 600)
+        fluidRow(
+          box(
+            title = "City Council Race Results",
+            status = "primary",
+            solidHeader = TRUE,
+            width = 12,
+            leafletOutput("councilMap", height = 600)
+          )
         )
       )
     )
   )
 )
 
-
+## Server ##
+server <- function(input, output, session) {
+  
+  # Reactive data for Mayor's map
+  filteredMayorData <- reactive({
+    mayor_results %>%
+      filter(ElectionYear == input$electionYear)
+  })
+  
+  # Reactive data for Council map
+  filteredCouncilData <- reactive({
+    council_data <- council_results %>%
+      filter(ElectionYear == input$electionYear)
+    if (input$councilDistrict != "All") {
+      council_data <- council_data %>%
+        filter(District == as.numeric(input$councilDistrict))
+    }
+    council_data
+  })
+  
+  # Render Mayoral Map
+  output$mayorMap <- renderLeaflet({
+    # Join filtered data with precinct shapefile
+    map_data <- precincts %>%
+      left_join(filteredMayorData(), by=c("NAME" = "Precinct"))%>%
+      filter(!is.na(WinnerColor))
+    
+    leaflet(data=map_data) %>%
+      addTiles() %>%
+      setView(lng = -98.4936,
+              lat = 29.4241,
+              zoom = 11) %>%
+      # City Council Districts
+      addPolygons(
+        data = districts,
+        color = 'black',
+        weight = 6,
+        opacity = 2,
+        fillColor = 'white',
+        #fillColor =  ~district_palette(District),
+        fillOpacity = 0.5,
+        label = ~District,
+        labelOptions = labelOptions(noHide = TRUE)
+      ) %>%
+      # Precincts with mayoral results
+      addPolygons(
+        color = 'black',
+        weight = 0.5,
+        opacity = 0.8,
+        fillColor = ~WinnerColor,
+        fillOpacity = 1,
+        popup = ~paste(
+          "<strong>Precinct:</strong>", NAME, "<br><br>",
+          "<strong>Winning Candidate:</strong> ", Winner, "<br>",
+          "<strong>Max Vote Share:</strong> ", round(MaxVoteShare, 1), "%", "<br><br>",
+          "<strong>All Results:</strong><br>", Results
+        ),
+        highlight=highlightOptions(
+          color = 'red',
+          weight = 2,
+          fillOpacity = 0.7,
+          bringToFront = TRUE
+        ),
+        label = ~NAME,
+        labelOptions = labelOptions(
+          style = list('color' = 'black', 'font-weight'='bold',
+                       'background-color' = 'white',
+                       'padding' = '5px',
+                       'border-radius'= '3px',
+                       'box-shadow' = '3px 3px rgba(0,0,0,0.25'),
+          textOnly = TRUE,
+          direction = 'right',
+          opacity = 0.9
+        ),
+        options = pathOptions(
+          cursor = 'pointer'
+        )
+      ) %>%
+      addLegend(
+        "bottomright",
+        pal = winner_palette_mayor,
+        values = unique(mayor_results$Winner),
+        title = "Winning Candidate",
+        opacity = 1
+      )
+  })
+  
+  # Render Council Map
+  output$councilMap <- renderLeaflet({
+    # Join filtered data with precinct shapefile
+    map_data_council <- precincts %>%
+      left_join(filteredCouncilData(), by=c("NAME" = "Precinct"))%>%
+      filter(!is.na(WinnerColor))
+    
+    leaflet(data = map_data_council) %>%
+      addTiles() %>%
+      setView(lng = -98.4936,
+              lat = 29.4241,
+              zoom = 11) %>%
+      # City Council Districts
+      addPolygons(
+        data = districts,
+        color = 'black',
+        weight = 6,
+        opacity = 2,
+        fillColor = 'white',
+        #fillColor =  ~district_palette(District),
+        fillOpacity = 1,
+        label = ~District,
+        labelOptions = labelOptions(noHide = TRUE)
+      ) %>%
+      # Precincts with council results
+      addPolygons(
+        color = 'black',
+        weight = 0.5,
+        opacity = 0.8,
+        fillColor = ~WinnerColor,
+        fillOpacity = 0.7,
+        popup = ~paste(
+          "<strong>District:</strong>", District, "<br>",
+          "<strong>Precinct:</strong>", NAME, "<br><br>",
+          "<strong>Winning Candidate:</strong> ", Winner, "<br>",
+          "<strong>Max Vote Share:</strong> ", round(MaxVoteShare, 1), "%", "<br><br>",
+          "<strong>All Results:</strong><br>", Results
+        ),
+        highlight=highlightOptions(
+          color = 'red',
+          weight = 2,
+          fillOpacity = 0.7,
+          bringToFront = TRUE
+        ),
+        label = ~NAME,
+        labelOptions = labelOptions(
+          style = list('color' = 'black', 'font-weight'='bold',
+                       'background-color' = 'white',
+                       'padding' = '5px',
+                       'border-radius'= '3px',
+                       'box-shadow' = '3px 3px rgba(0,0,0,0.25'),
+          textOnly = TRUE,
+          direction = 'right',
+          opacity = 0.9
+        ),
+        options = pathOptions(
+          cursor = 'pointer'
+        )
+      ) %>%
+      addLegend(
+        "bottomright",
+        pal = winner_palette,
+        values = unique(council_results$Winner),
+        title = "Winning Candidates",
+        opacity = 1
+      )
+  })
+}
+shinyApp(ui, server)

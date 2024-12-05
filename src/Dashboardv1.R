@@ -20,6 +20,9 @@ may2023election <- read_csv('~/Documents/Repos/COSA-Elections/data/satx2023_gene
   mutate(ElectionYear = 2023)
 View(may2023election)
 
+# Spatial join precincts & districts
+precincts <- st_join(precincts, districts['District'])
+
 # Aggregate Mayor's race results
 mayor_results <- may2023election %>%
   filter(Race == 'Mayor') %>%
@@ -72,14 +75,22 @@ ui <- dashboardPage(
   dashboardHeader(title = "San Antonio Municipal Election Results"),
   dashboardSidebar(
     sidebarMenu(
+      id = "tabs",
       menuItem("Mayoral Race", tabName = "mayor", icon = icon("user-tie")),
       menuItem("City Council Race", tabName = "council", icon = icon("users")),
       selectInput("electionYear", "Select Election Year:",
                   choices = unique(mayor_results$ElectionYear), selected = 2023),
       conditionalPanel(
-        condition = "input.tab === 'council'",
+        condition = "input.tabs == 'council'",
         selectInput("councilDistrict", "Select Council District:",
-                    choices = c("All", unique(council_results$District)))
+                    choices = c("All", unique(council_results$District)),
+                    selected = "All")
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'mayor'",
+        selectInput("mayorDistrict", "Select Council Distsrict:",
+                    choices = c("All", unique(districts$District)),
+                    selected = "All")
       )
     )
   ),
@@ -120,8 +131,16 @@ server <- function(input, output, session) {
   
   # Reactive data for Mayor's map
   filteredMayorData <- reactive({
-    mayor_results %>%
+    data <- mayor_results %>%
       filter(ElectionYear == input$electionYear)
+    if (input$mayorDistrict != "All") {
+      valid_precincts <- precincts %>%
+        filter(District == as.numeric(input$mayorDistrict)) %>%
+        pull(NAME)
+      data <- data %>%
+        filter(Precinct %in% valid_precincts)
+    }
+    data
   })
   
   # Reactive data for Council map
@@ -129,8 +148,11 @@ server <- function(input, output, session) {
     council_data <- council_results %>%
       filter(ElectionYear == input$electionYear)
     if (input$councilDistrict != "All") {
+      valid_precincts <- precincts %>%
+        filter(District == as.numeric(input$councilDistrict)) %>%
+        pull(NAME)
       council_data <- council_data %>%
-        filter(District == as.numeric(input$councilDistrict))
+        filter(Precinct %in% valid_precincts)
     }
     council_data
   })
@@ -196,7 +218,7 @@ server <- function(input, output, session) {
       addLegend(
         "bottomright",
         pal = winner_palette_mayor,
-        values = unique(mayor_results$Winner),
+        values = unique(filteredMayorData()$Winner),
         title = "Winning Candidate",
         opacity = 1
       )
@@ -264,7 +286,7 @@ server <- function(input, output, session) {
       addLegend(
         "bottomright",
         pal = winner_palette,
-        values = unique(council_results$Winner),
+        values = unique(filteredCouncilData()$Winner),
         title = "Winning Candidates",
         opacity = 1
       )

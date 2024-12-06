@@ -22,6 +22,7 @@ View(may2023election)
 
 # Spatial join precincts & districts
 precincts <- st_join(precincts, districts['District'])
+View(precincts)
 
 # Aggregate Mayor's race results
 mayor_results <- may2023election %>%
@@ -45,6 +46,7 @@ mayoral_palette = colorFactor(
   palette = brewer.pal(min(length(mayoral_winners), 12), "Set3"),
   domain = mayoral_winners
 )
+View(mayor_results)
 
 # Aggregate City Council results
 council_results <- may2023election %>%
@@ -69,6 +71,7 @@ council_palette = colorFactor(
   palette = brewer.pal(min(length(council_winners), 12), "Set3"),
   domain = council_winners
 )
+View(council_results)
 
 ## UI ##
 ui <- dashboardPage(
@@ -138,7 +141,7 @@ server <- function(input, output, session) {
         filter(District == as.numeric(input$mayorDistrict)) %>%
         pull(NAME)
       data <- data %>%
-        filter(Precinct %in% valid_precincts)
+        filter(Precinct %in% valid_precincts) 
     }
     data
   })
@@ -148,13 +151,15 @@ server <- function(input, output, session) {
     council_data <- council_results %>%
       filter(ElectionYear == input$electionYear)
     if (input$councilDistrict != "All") {
-      valid_precincts <- precincts %>%
-        filter(District == as.numeric(input$councilDistrict)) %>%
-        pull(NAME)
       council_data <- council_data %>%
-        filter(Precinct %in% valid_precincts)
+        filter(District == as.numeric(input$councilDistrict))
     }
     council_data
+  })
+  
+  observe({
+  print("Filtered Council Data:")
+  print(filteredCouncilData())
   })
   
   # Render Mayoral Map
@@ -173,8 +178,8 @@ server <- function(input, output, session) {
       addPolygons(
         data = districts,
         color = 'black',
-        weight = 6,
-        opacity = 2,
+        weight = 1,
+        opacity = 1,
         fillColor = 'white',
         #fillColor =  ~district_palette(District),
         fillOpacity = 0.5,
@@ -184,8 +189,8 @@ server <- function(input, output, session) {
       # Precincts with mayoral results
       addPolygons(
         color = 'black',
-        weight = 0.5,
-        opacity = 0.8,
+        weight = 1,
+        opacity = 1,
         fillColor = ~WinnerColor,
         fillOpacity = 1,
         popup = ~paste(
@@ -225,11 +230,31 @@ server <- function(input, output, session) {
   })
   
   # Render Council Map
+  observe({
+    print("Filtered Council Data:")
+    print(filteredCouncilData())
+  })
+  
   output$councilMap <- renderLeaflet({
     # Join filtered data with precinct shapefile
     map_data_council <- precincts %>%
       left_join(filteredCouncilData(), by=c("NAME" = "Precinct"))%>%
+      mutate(
+        District.x = as.numeric(District.x),
+        District.y = as.numeric(District.y),
+        District = coalesce(District.x, District.y)) %>%
+      select(-District.x, District.y) %>%
       filter(!is.na(WinnerColor))
+    
+
+    print("Map Data for Council:")
+    print(head(map_data_council))
+    print(names(map_data_council))
+
+    # Ensure District column exists
+    if (!"District" %in% names(map_data_council)) {
+      stop("District column missing in map_data_council after the join!")
+    }
     
     leaflet(data = map_data_council) %>%
       addTiles() %>%
@@ -240,8 +265,8 @@ server <- function(input, output, session) {
       addPolygons(
         data = districts,
         color = 'black',
-        weight = 6,
-        opacity = 2,
+        weight = 1,
+        opacity = 1,
         fillColor = 'white',
         #fillColor =  ~district_palette(District),
         fillOpacity = 1,
@@ -251,8 +276,8 @@ server <- function(input, output, session) {
       # Precincts with council results
       addPolygons(
         color = 'black',
-        weight = 0.5,
-        opacity = 0.8,
+        weight = 1,
+        opacity = 1,
         fillColor = ~WinnerColor,
         fillOpacity = 0.7,
         popup = ~paste(

@@ -5,18 +5,20 @@ library(tidyverse)
 library(sf)
 library(RColorBrewer)
 library(shinydashboard)
+library(rsconnect)
+
 
 # Load & Pre-process Data
-precincts <- st_read('../shapefiles/Bexar_County_Voter_Precincts.shp') %>%
+precincts <- st_read('/Users/jackturek/Documents/Repos/COSA-Elections/shapefiles/Bexar_County_Voter_Precincts.shp') %>%
   st_transform(crs = 4326)
 View(precincts)
 precincts$NAME <- as.integer(precincts$NAME)
 
-districts <- st_read('../shapefiles/RedistrictedCouncilDistricts2022.shp') %>%
+districts <- st_read('/Users/jackturek/Documents/Repos/COSA-Elections/shapefiles/RedistrictedCouncilDistricts2022.shp') %>%
   st_transform(crs = 4326)
 View(districts)
 
-may2023election <- read_csv('~/Documents/Repos/COSA-Elections/data/satx2023_generalelection_002.csv') %>%
+may2023election <- read_csv('/Users/jackturek/Documents/Repos/COSA-Elections/data/satx2023_generalelection_002.csv') %>%
   mutate(ElectionYear = 2023)
 View(may2023election)
 
@@ -182,7 +184,7 @@ server <- function(input, output, session) {
         opacity = 1,
         fillColor = 'white',
         #fillColor =  ~district_palette(District),
-        fillOpacity = 0.5,
+        fillOpacity = 0.1,
         label = ~District,
         labelOptions = labelOptions(noHide = TRUE)
       ) %>%
@@ -269,7 +271,7 @@ server <- function(input, output, session) {
         opacity = 1,
         fillColor = 'white',
         #fillColor =  ~district_palette(District),
-        fillOpacity = 1,
+        fillOpacity = .1,
         label = ~District,
         labelOptions = labelOptions(noHide = TRUE)
       ) %>%

@@ -1,0 +1,10 @@
+name: san-antonio-elections
+title:
+username: jturek
+account: jturek
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 13536965
+bundleId: 9471726
+url: https://jturek.shinyapps.io/san-antonio-elections/
+version: 1

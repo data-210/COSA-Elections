@@ -16,6 +16,8 @@ precincts$NAME <- as.integer(precincts$NAME)
 districts <- st_read('RedistrictedCouncilDistricts2022.shp') %>%
   st_transform(crs = 4326)
 
+districts <- districts %>% arrange(as.numeric(District))
+
 may2023election <- read_csv('satx2023_generalelection_002.csv') %>%
   mutate(ElectionYear = 2023)
 
@@ -83,7 +85,7 @@ ui <- dashboardPage(
       conditionalPanel(
         condition = "input.tabs == 'council'",
         selectInput("councilDistrict", "Select Council District:",
-                    choices = c("All", unique(council_results$District)),
+                    choices = c("All", sort(unique(council_results$District))),
                     selected = "All")
       ),
       conditionalPanel(
@@ -153,12 +155,7 @@ server <- function(input, output, session) {
     }
     council_data
   })
-  
-  observe({
-    print("Filtered Council Data:")
-    print(filteredCouncilData())
-  })
-  
+
   # Render Mayoral Map
   output$mayorMap <- renderLeaflet({
     # Join filtered data with precinct shapefile

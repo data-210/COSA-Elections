@@ -153,7 +153,11 @@ server <- function(input, output, session) {
       council_data <- council_data %>%
         filter(District == as.numeric(input$councilDistrict))
     }
-    council_data
+    # Count precincts won by each candidate
+    council_data <- council_data %>%
+      group_by(Winner) %>%
+      mutate(PrecinctsWon = n()) %>%
+      ungroup()
   })
 
   # Render Mayoral Map
@@ -224,11 +228,6 @@ server <- function(input, output, session) {
   })
   
   # Render Council Map
-  observe({
-    print("Filtered Council Data:")
-    print(filteredCouncilData())
-  })
-  
   output$councilMap <- renderLeaflet({
     # Join filtered data with precinct shapefile
     map_data_council <- precincts %>%
@@ -240,15 +239,20 @@ server <- function(input, output, session) {
       select(-District.x, District.y) %>%
       filter(!is.na(WinnerColor))
     
+    # Prepare legend labels with precincts won
+    legend_data <- filteredCouncilData() %>%
+      group_by(District, Winner) %>%
+      summarise(PrecinctsWon = n(), .groups = "drop") %>%
+      left_join(
+        filteredCouncilData() %>%
+          group_by(District) %>%
+          summarise(TotalPrecincts = n_distinct(Precinct), .groups = "drop"),
+        by = "District"
+      ) %>%
+      mutate(Label = paste0(Winner, " (", PrecinctsWon, "/", TotalPrecincts, " precincts won)")) 
     
-    print("Map Data for Council:")
-    print(head(map_data_council))
-    print(names(map_data_council))
-    
-    # Ensure District column exists
-    if (!"District" %in% names(map_data_council)) {
-      stop("District column missing in map_data_council after the join!")
-    }
+    # legend_labels <- legend_data$Label
+    # legend_values <- legend_data$Winner
     
     leaflet(data = map_data_council) %>%
       addTiles() %>%
@@ -302,13 +306,34 @@ server <- function(input, output, session) {
           cursor = 'pointer'
         )
       ) %>%
-      addLegend(
-        "bottomright",
-        pal = winner_palette,
-        values = unique(filteredCouncilData()$Winner),
-        title = "Winning Candidates",
-        opacity = 1
-      )
-  })
+      addControl(
+        html = createCustomLegend(legend_data),
+        position = "bottomright")
+      })
+  # Custom HTML legend function
+  createCustomLegend <- function(legend_data) {
+    html <- '<div style="background: white; padding: 10px; border-radius: 5px;">'
+    html <- paste0(html, '<strong>Winning Candidates:</strong><br>')
+    for (i in seq_len(nrow(legend_data))) {
+      html <- paste0(html,
+                     '<div style="display: flex; align-items: center;">',
+                     '<div style="width: 10px; height: 10px; background-color:',
+                     council_palette(legend_data$Winner[i]), '; margin-right: 5px;"></div>',
+                     legend_data$Label[i], '</div>')
+    }
+    html <- paste0(html, '</div>')
+    return(html)
+  
+  #     addLegend(
+  #       "bottomright",
+  #       pal = winner_palette,
+  #       values = legend_values,
+  #       title = "Winning Candidates",
+  #       labels = legend_labels,
+  #       opacity = 1
+  #     )
+  # })
+  }
 }
+
 shinyApp(ui, server)

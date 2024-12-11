@@ -74,12 +74,15 @@ council_palette = colorFactor(
 
 ## UI ##
 ui <- dashboardPage(
-  dashboardHeader(title = "San Antonio Municipal Election Results"),
+  dashboardHeader(title = tags$div(
+    style = "white-space: nowrap; overflow: visible; text-overflow: clip;",
+    "San Antonio Municipal Elections"
+  ), titleWidth = 400),
   dashboardSidebar(
     sidebarMenu(
       id = "tabs",
-      menuItem("Mayoral Race", tabName = "mayor", icon = icon("user-tie")),
-      menuItem("City Council Race", tabName = "council", icon = icon("users")),
+      menuItem("Mayoral Elections", tabName = "mayor", icon = icon("user-tie")),
+      menuItem("City Council Elections", tabName = "council", icon = icon("users")),
       selectInput("electionYear", "Select Election Year:",
                   choices = unique(mayor_results$ElectionYear), selected = 2023),
       conditionalPanel(
@@ -103,7 +106,7 @@ ui <- dashboardPage(
         tabName = "mayor",
         fluidRow(
           box(
-            title = "Mayoral Race Results",
+            title = "Mayoral Election Results",
             status = "primary",
             solidHeader = TRUE,
             width = 12,
@@ -127,7 +130,7 @@ ui <- dashboardPage(
         tabName = "council",
         fluidRow(
           box(
-            title = "City Council Race Results",
+            title = "City Council Election Results",
             status = "primary",
             solidHeader = TRUE,
             width = 12,

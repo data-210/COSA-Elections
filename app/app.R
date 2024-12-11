@@ -109,8 +109,19 @@ ui <- dashboardPage(
             width = 12,
             leafletOutput("mayorMap", height = 600)
           )
+        ),
+        # Mayoral Candidate Data Table - Vote Share
+        fluidRow(
+          box(
+            title = "Mayoral Race Candidate Vote Share",
+            status = "info",
+            solidHeader = TRUE,
+            width = 12,
+            dataTableOutput("mayorTable")
+          )
         )
       ),
+      
       # Council Results Tab
       tabItem(
         tabName = "council",
@@ -122,6 +133,15 @@ ui <- dashboardPage(
             width = 12,
             leafletOutput("councilMap", height = 600)
           )
+        ),
+        fluidRow(
+          box(
+            title = "City Council Candidate Vote Share",
+            status = "info",
+            solidHeader = TRUE,
+            width = 12,
+            dataTableOutput("councilTable")
+          )
         )
       )
     )
@@ -130,6 +150,69 @@ ui <- dashboardPage(
 
 ## Server ##
 server <- function(input, output, session) {
+  
+  # Mayor's Table
+  filteredMayorTableData <- reactive({
+    mayor_data <- may2023election %>%
+      filter(Race == 'Mayor') %>%
+      group_by(Candidate) %>%
+      summarise(
+        `Total Votes` = sum(`Total Votes`, na.rm = TRUE),
+        .groups = "drop"
+      )
+    total_votes_all_candidates <- sum(mayor_data$`Total Votes`, na.rm=TRUE)
+    mayor_data <- mayor_data %>%
+      mutate(`Vote Share` = `Total Votes` / total_votes_all_candidates*100) %>%
+      arrange(desc(`Total Votes`))
+    
+    mayor_data
+   
+   })
+  
+  # Council Table
+  filteredCouncilTableData <- reactive({
+    council_data <- may2023election %>%
+      filter(str_detect(Race, "District")) %>%
+      mutate(
+        District = as.numeric(str_extract(Race, "\\d+"))
+      )
+    # Apply district filter
+    if (input$councilDistrict != "All") {
+      council_data <- council_data %>%
+        filter(District == as.numeric(input$councilDistrict))
+    }
+    # Aggregate votes and calculate vote share
+    council_table <- council_data %>%
+      group_by(Candidate) %>%
+      summarise(
+        `Total Votes` = sum(`Total Votes`, na.rm = TRUE),
+        .groups = "drop"
+      )
+    total_votes_all_candidates <- sum(council_table$`Total Votes`, na.rm = TRUE)
+    council_table <- council_table %>%
+      mutate(`Vote Share` = `Total Votes` / total_votes_all_candidates*100) %>%
+      arrange(desc(`Total Votes`))
+    
+    council_table
+  })
+  
+  # Render Mayoral Table
+  output$mayorTable <- renderDataTable({
+    filteredMayorTableData() %>%
+      mutate(
+        `Total Votes` = scales::comma(`Total Votes`),
+        `Vote Share` = scales::percent(`Vote Share`/100)
+      )
+  })
+  
+  # Render Council Table
+  output$councilTable <- renderDataTable({
+    filteredCouncilTableData() %>%
+      mutate(
+        `Total Votes` = scales::comma(`Total Votes`),
+        `Vote Share` = scales::percent(`Vote Share`/100)
+      )
+  })
   
   # Reactive data for Mayor's map
   filteredMayorData <- reactive({

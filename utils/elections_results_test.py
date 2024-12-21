@@ -1,8 +1,14 @@
 import pdfplumber
 import pandas as pd
+from pathlib import Path
 
 # Path to the uploaded PDF file
-pdf_path = '/Users/jackturek/Desktop/Data Data Data/Personal Projects/Public Policy Stuff/Voting, Political Science & Elections/Analzying Election and Poll Data/SanAntonio/May 6 2023 Precinct.pdf'
+# pdf_path = '../data/May\ 6\ 2023\ Precinct.pdf'
+REPO = Path(__file__).resolve().parents[1]
+DATA = Path.joinpath(REPO, 'data')
+
+pdf_path = Path.joinpath(DATA, 'may2023general.pdf')
+
 
 # Initialize empty list to store extracted results
 data = []
@@ -65,7 +71,7 @@ df = pd.DataFrame(data)
 print(df.head())  # This will just print the first few rows to verify
 
 # Save the DataFrame to a CSV file
-csv_path = 'san_antonio_precinct_race_candidates_votes_extraction.csv'
+csv_path = 'may2023general.csv'
 df.to_csv(csv_path, index=False)
 
 print(f"CSV saved to: {csv_path}")

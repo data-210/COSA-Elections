@@ -1,7 +1,10 @@
 import pandas as pd
+from pathlib import Path
 
 # Load CSV file
-csv_file_path = 'Bexar County & COSA Elections/Analzying Election and Poll Data/SanAntonio/satx2023_dirty.csv'
+REPO = Path(__file__).resolve().parents[1]
+DATA = Path.joinpath(REPO, 'data')
+csv_file_path = Path.joinpath(DATA, 'may2023general.csv')
 
 # Read in CSV
 df = pd.read_csv(csv_file_path)
@@ -95,4 +98,4 @@ df_cleaned['Vote Percentage'] = (df_cleaned['Total Votes'] / total_votes_per_rac
 # Round Vote Percentage to 2 decimal points
 df_cleaned['Vote Percentage'] = df_cleaned['Vote Percentage'].round(2)
 
-df_cleaned.to_csv('satx2023_generalelection_002.csv')
+df_cleaned.to_csv('may2023general_clean.csv')

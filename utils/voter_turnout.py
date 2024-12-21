@@ -1,8 +1,12 @@
 import pdfplumber
 import pandas as pd
+from pathlib import Path
 
 # Path to your local PDF file
-pdf_path = '/Users/jackturek/Desktop/Data Data Data/Personal Projects/Public Policy Stuff/Voting, Political Science & Elections/Analzying Election and Poll Data/SanAntonio/Elections/May 6 2023 Precinct.pdf'
+REPO = Path(__file__).resolve().parents[1]
+DATA = Path.joinpath(REPO, 'data')
+
+pdf_path = Path.joinpath(DATA, 'may2023general.pdf')
 
 # Initialize empty list to store extracted results
 turnout_data = []

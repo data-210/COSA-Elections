@@ -18,7 +18,7 @@ districts <- st_read('RedistrictedCouncilDistricts2022.shp') %>%
 
 districts <- districts %>% arrange(as.numeric(District))
 
-may2023election <- read_csv('satx2023_generalelection_002.csv') %>%
+may2023election <- read_csv('may2023general_clean.csv') %>%
   mutate(ElectionYear = 2023)
 
 

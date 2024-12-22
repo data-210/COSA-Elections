@@ -12,6 +12,7 @@ precincts <- st_read('Bexar_County_Voter_Precincts.shp') %>%
   st_transform(crs = 4326)
 
 precincts$NAME <- as.integer(precincts$NAME)
+View(precincts)
 
 districts <- st_read('RedistrictedCouncilDistricts2022.shp') %>%
   st_transform(crs = 4326)
@@ -20,20 +21,16 @@ districts <- districts %>% arrange(as.numeric(District))
 
 # Spatial join precincts & districts
 precincts <- st_join(precincts, districts['District'])
+precincts <- precincts %>% filter(!is.na(District))
+
 
 may2023election <- read_csv('may2023general_clean.csv') %>%
   mutate(ElectionYear = 2023)
+View(may2023election)
 
 voter_turnout2023 <- read_csv('voter_turnout2023.csv')
 voter_turnout2023 <- voter_turnout2023 %>%
   mutate(`Voter Turnout (%)` = as.numeric(gsub("%", "", `Voter Turnout (%)`)) /100)
-View(voter_turnout2023)
-
-precincts_turnout <- precincts %>%
-  left_join(voter_turnout2023, by = c("NAME" = "Precinct"))
-precincts_turnout <- precincts_turnout %>%
-  filter(!is.na(`Voter Turnout (%)`))
-View(precincts_turnout)
 
 # Create a color palette for the heatmap
 turnout_palette <- colorNumeric(
@@ -98,6 +95,18 @@ council_results <- may2023election %>%
   mutate(WinnerColor = council_palette(Winner)(Winner))
 
 council_winners <- unique(council_results$Winner)
+View(council_results)
+
+# Voter turnout
+valid_precincts <- unique(mayor_results$Precinct)
+voter_turnout2023 <- voter_turnout2023 %>%
+  filter(Precinct %in% valid_precincts)
+View(voter_turnout2023)
+
+precincts_turnout <- precincts %>%
+  filter(NAME %in% valid_precincts) %>%
+  left_join(voter_turnout2023, by = c("NAME" = "Precinct"))
+
 
 ##########################################################################################
 ## UI ##
@@ -318,7 +327,14 @@ server <- function(input, output, session) {
   filteredTurnoutTableData <- reactive({
     filteredTurnoutData() %>%
       st_drop_geometry() %>%
-      arrange(desc(`Voter Turnout (%)`)) %>%
+      select(
+        Precinct = NAME,
+        District,
+        `Registered Voters`,
+        `Ballots Cast`,
+        `Voter Turnout (%)`
+      ) %>%
+      arrange(desc(`Ballots Cast`)) %>%
       mutate(
         `Voter Turnout (%)` = round(`Voter Turnout (%)`*100,1),
         `Ballots Cast` = scales::comma(`Ballots Cast`),

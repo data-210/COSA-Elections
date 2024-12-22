@@ -316,13 +316,19 @@ server <- function(input, output, session) {
   
   # Reactive data for Voter Turnout Table
   filteredTurnoutTableData <- reactive({
-    voter_turnout2023 %>%
+    filteredTurnoutData() %>%
+      st_drop_geometry() %>%
       arrange(desc(`Voter Turnout (%)`)) %>%
       mutate(
-        `Voter Turnout (%)` = scales::percent(`Voter Turnout (%)`),
+        `Voter Turnout (%)` = round(`Voter Turnout (%)`*100,1),
         `Ballots Cast` = scales::comma(`Ballots Cast`),
         `Registered Voters` = scales::comma(`Registered Voters`)
       )
+  })
+  
+  # Render Voter Turnout Table
+  output$turnoutTable <- renderDataTable({
+    filteredTurnoutTableData()
   })
   
   # Render Mayoral Map

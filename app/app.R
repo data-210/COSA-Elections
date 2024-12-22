@@ -18,12 +18,35 @@ districts <- st_read('RedistrictedCouncilDistricts2022.shp') %>%
 
 districts <- districts %>% arrange(as.numeric(District))
 
+# Spatial join precincts & districts
+precincts <- st_join(precincts, districts['District'])
+
 may2023election <- read_csv('may2023general_clean.csv') %>%
   mutate(ElectionYear = 2023)
 
+voter_turnout2023 <- read_csv('voter_turnout2023.csv')
+voter_turnout2023 <- voter_turnout2023 %>%
+  mutate(`Voter Turnout (%)` = as.numeric(gsub("%", "", `Voter Turnout (%)`)) /100)
+View(voter_turnout2023)
 
-# Spatial join precincts & districts
-precincts <- st_join(precincts, districts['District'])
+precincts_turnout <- precincts %>%
+  left_join(voter_turnout2023, by = c("NAME" = "Precinct"))
+precincts_turnout <- precincts_turnout %>%
+  filter(!is.na(`Voter Turnout (%)`))
+View(precincts_turnout)
+
+# Create a color palette for the heatmap
+turnout_palette <- colorNumeric(
+  palette = c("blue", 'lightblue', 'yellow', 'orange', 'red'),
+  domain = precincts_turnout$`Voter Turnout (%)`,
+  na.color = "transparent"
+)
+
+# Mayoral palette
+mayoral_palette <- colorFactor(
+  palette = brewer.pal(min(length(mayoral_winners), 12), "Set3"),
+  domain = mayoral_winners
+)
 
 # Aggregate Mayor's race results
 mayor_results <- may2023election %>%
@@ -32,7 +55,9 @@ mayor_results <- may2023election %>%
   group_by(Precinct, ElectionYear) %>%
   summarise(
     Results = paste(
-      Candidate, ": ", `Total Votes`, " votes (", round(`Vote Percentage`, 1), "%)",
+      Candidate[!is.na(`Vote Percentage`)], ": ", 
+      `Total Votes`[!is.na(`Vote Percentage`)], " votes (", 
+      round(`Vote Percentage`[!is.na(`Vote Percentage`)], 1), "%)",
       collapse = "<br>"
     ), 
     MaxVoteShare = max(`Vote Percentage`, na.rm = TRUE),
@@ -40,14 +65,17 @@ mayor_results <- may2023election %>%
     .groups = 'drop'
   ) %>%
   mutate(
-    WinnerColor = mayoral_palette(Winner)
+    WinnerColor = mayoral_palette(Winner)(Winner)
   )
 mayoral_winners = unique(mayor_results$Winner)
-mayoral_palette = colorFactor(
-  palette = brewer.pal(min(length(mayoral_winners), 12), "Set3"),
-  domain = mayoral_winners
-)
 
+
+
+# Council Palette
+council_palette <- colorFactor(
+  palette = brewer.pal(min(length(council_winners),12), "Set3"),
+  domain = council_winners
+)
 # Aggregate City Council results
 council_results <- may2023election %>%
   filter(str_detect(Race, 'District')) %>%
@@ -58,20 +86,20 @@ council_results <- may2023election %>%
   group_by(Precinct, District, ElectionYear) %>%
   summarise(
     Results = paste(
-      Candidate, ": ", `Total Votes`, " votes (", round(`Vote Percentage`, 1), "%)",
+      Candidate[!is.na(`Vote Percentage`)], ": ", 
+      `Total Votes`[!is.na(`Vote Percentage`)], " votes (", 
+      round(`Vote Percentage`[!is.na(`Vote Percentage`)], 1), "%)",
       collapse = "<br>"
     ), 
     MaxVoteShare = max(`Vote Percentage`, na.rm = TRUE),
     Winner = Candidate[which.max(`Vote Percentage`)],
     .groups = 'drop'
   ) %>%
-  mutate(WinnerColor = council_palette(Winner))
-council_winners = unique(council_results$Winner)
-council_palette = colorFactor(
-  palette = brewer.pal(min(length(council_winners), 12), "Set3"),
-  domain = council_winners
-)
+  mutate(WinnerColor = council_palette(Winner)(Winner))
 
+council_winners <- unique(council_results$Winner)
+
+##########################################################################################
 ## UI ##
 ui <- dashboardPage(
   dashboardHeader(title = tags$div(
@@ -83,6 +111,7 @@ ui <- dashboardPage(
       id = "tabs",
       menuItem("Mayoral Elections", tabName = "mayor", icon = icon("user-tie")),
       menuItem("City Council Elections", tabName = "council", icon = icon("users")),
+      menuItem("Voter Turnout", tabName = "turnout", icon = icon("chart-bar")),
       selectInput("electionYear", "Select Election Year:",
                   choices = unique(mayor_results$ElectionYear), selected = 2023),
       conditionalPanel(
@@ -94,6 +123,12 @@ ui <- dashboardPage(
       conditionalPanel(
         condition = "input.tabs == 'mayor'",
         selectInput("mayorDistrict", "Select Council Distsrict:",
+                    choices = c("All", unique(districts$District)),
+                    selected = "All")
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'turnout'",
+        selectInput("turnoutDistrict", "Select Council District:",
                     choices = c("All", unique(districts$District)),
                     selected = "All")
       )
@@ -146,11 +181,33 @@ ui <- dashboardPage(
             dataTableOutput("councilTable")
           )
         )
+      ),
+      # Voter Turnout Tab
+      tabItem(
+        tabName = "turnout",
+        fluidRow(
+          box(
+            title = "Voter Turnout by Precinct",
+            status = "primary",
+            solidHeader = TRUE,
+            width = 12,
+            leafletOutput("turnoutMap", height = 600)
+          )
+        ),
+        fluidRow(
+          box(
+            title = "Precinct Voter Turnout Data",
+            status = "info",
+            solidHeader = TRUE,
+            width = 12,
+            dataTableOutput("turnoutTable")
+          )
+        )
       )
     )
   )
 )
-
+######################################################################################
 ## Server ##
 server <- function(input, output, session) {
   
@@ -199,6 +256,7 @@ server <- function(input, output, session) {
     council_table
   })
   
+  
   # Render Mayoral Table
   output$mayorTable <- renderDataTable({
     filteredMayorTableData() %>%
@@ -245,7 +303,28 @@ server <- function(input, output, session) {
       mutate(PrecinctsWon = n()) %>%
       ungroup()
   })
-
+  
+  # Reactive data for Voter Turnout Map
+  filteredTurnoutData <- reactive({
+    if (input$turnoutDistrict == "All") {
+      precincts_turnout
+    } else {
+      precincts_turnout %>%
+        filter(District == as.numeric(input$turnoutDistrict))
+    }
+  })
+  
+  # Reactive data for Voter Turnout Table
+  filteredTurnoutTableData <- reactive({
+    voter_turnout2023 %>%
+      arrange(desc(`Voter Turnout (%)`)) %>%
+      mutate(
+        `Voter Turnout (%)` = scales::percent(`Voter Turnout (%)`),
+        `Ballots Cast` = scales::comma(`Ballots Cast`),
+        `Registered Voters` = scales::comma(`Registered Voters`)
+      )
+  })
+  
   # Render Mayoral Map
   output$mayorMap <- renderLeaflet({
     # Join filtered data with precinct shapefile
@@ -306,7 +385,7 @@ server <- function(input, output, session) {
       ) %>%
       addLegend(
         "bottomright",
-        pal = winner_palette_mayor,
+        pal = mayoral_palette,
         values = unique(filteredMayorData()$Winner),
         title = "Winning Candidate",
         opacity = 1
@@ -337,8 +416,6 @@ server <- function(input, output, session) {
       ) %>%
       mutate(Label = paste0(Winner, " (", PrecinctsWon, "/", TotalPrecincts, " precincts won)")) 
     
-    # legend_labels <- legend_data$Label
-    # legend_values <- legend_data$Winner
     
     leaflet(data = map_data_council) %>%
       addTiles() %>%
@@ -396,6 +473,55 @@ server <- function(input, output, session) {
         html = createCustomLegend(legend_data),
         position = "bottomright")
       })
+  
+  # Voter Turnout Map
+  output$turnoutMap <- renderLeaflet({
+    leaflet(data = filteredTurnoutData()) %>%
+      addTiles() %>%
+      setView(lng = -98.4936,
+              lat = 29.4241,
+              zoom = 11) %>%
+      # City Council Districts
+      addPolygons(
+        data = districts,
+        color = 'black',
+        weight = 1,
+        opacity = 1,
+        fillColor = 'white',
+        #fillColor =  ~district_palette(District),
+        fillOpacity = 0.2,
+        label = ~District,
+        labelOptions = labelOptions(noHide = TRUE)
+      ) %>%
+      # Precinct Turnout
+      addPolygons(
+        color = 'black',
+        weight = 1,
+        opacity = 1,
+        fillColor = ~turnout_palette(`Voter Turnout (%)`),
+        fillOpacity = 0.7,
+        popup = ~paste(
+          "<strong>Precinct:</strong>", NAME, "<br>",
+          "<strong>Turnout Percentage:</strong>", round(`Voter Turnout (%)`*100,1), "%", "<br>",
+          "<strong>Registered Voters:</strong>", scales::comma(`Registered Voters`), "<br>",
+          "<strong>Total Votes:</strong>", scales::comma(`Ballots Cast`)
+        ),
+        highlight = highlightOptions(
+          color = 'red',
+          weight = 2,
+          bringToFront = TRUE
+        )
+      ) %>%
+      addLegend(
+        pal = turnout_palette,
+        values = precincts_turnout$`Voter Turnout (%)`,
+        position = 'bottomright',
+        title = "Voter Turnout",
+        labFormat = labelFormat(transform = function(x) round(x * 100,1), suffix = '%')
+      )
+    
+  })
+  
   # Custom HTML legend function
   createCustomLegend <- function(legend_data) {
     html <- '<div style="background: white; padding: 10px; border-radius: 5px;">'
@@ -409,16 +535,7 @@ server <- function(input, output, session) {
     }
     html <- paste0(html, '</div>')
     return(html)
-  
-  #     addLegend(
-  #       "bottomright",
-  #       pal = winner_palette,
-  #       values = legend_values,
-  #       title = "Winning Candidates",
-  #       labels = legend_labels,
-  #       opacity = 1
-  #     )
-  # })
+ 
   }
 }
 

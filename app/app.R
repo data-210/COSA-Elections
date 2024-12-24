@@ -39,12 +39,6 @@ turnout_palette <- colorNumeric(
   na.color = "transparent"
 )
 
-# Mayoral palette
-mayoral_palette <- colorFactor(
-  palette = brewer.pal(min(length(mayoral_winners), 12), "Set3"),
-  domain = mayoral_winners
-)
-
 # Aggregate Mayor's race results
 mayor_results <- may2023election %>%
   filter(Race == 'Mayor') %>%
@@ -60,19 +54,19 @@ mayor_results <- may2023election %>%
     MaxVoteShare = max(`Vote Percentage`, na.rm = TRUE),
     Winner = Candidate[which.max(`Vote Percentage`)],
     .groups = 'drop'
-  ) %>%
-  mutate(
-    WinnerColor = mayoral_palette(Winner)(Winner)
-  )
+  ) 
+
 mayoral_winners = unique(mayor_results$Winner)
 
-
-
-# Council Palette
-council_palette <- colorFactor(
-  palette = brewer.pal(min(length(council_winners),12), "Set3"),
-  domain = council_winners
+# Mayoral palette
+mayoral_palette <- colorFactor(
+  palette = brewer.pal(min(length(mayoral_winners), 12), "Set3"),
+  domain = mayoral_winners
 )
+mayor_results <- mayor_results %>%
+  mutate(WinnerColor = mayoral_palette(Winner))
+
+
 # Aggregate City Council results
 council_results <- may2023election %>%
   filter(str_detect(Race, 'District')) %>%
@@ -91,10 +85,17 @@ council_results <- may2023election %>%
     MaxVoteShare = max(`Vote Percentage`, na.rm = TRUE),
     Winner = Candidate[which.max(`Vote Percentage`)],
     .groups = 'drop'
-  ) %>%
-  mutate(WinnerColor = council_palette(Winner)(Winner))
+  )
 
 council_winners <- unique(council_results$Winner)
+# Council Palette
+council_palette <- colorFactor(
+  palette = brewer.pal(min(length(council_winners),12), "Set3"),
+  domain = council_winners
+)
+council_results <- council_results %>%
+  mutate(WinnerColor = council_palette(Winner))
+
 View(council_results)
 
 # Voter turnout
@@ -235,8 +236,8 @@ server <- function(input, output, session) {
       arrange(desc(`Total Votes`))
     
     mayor_data
-   
-   })
+    
+  })
   
   # Council Table
   filteredCouncilTableData <- reactive({
@@ -494,7 +495,7 @@ server <- function(input, output, session) {
       addControl(
         html = createCustomLegend(legend_data),
         position = "bottomright")
-      })
+  })
   
   # Voter Turnout Map
   output$turnoutMap <- renderLeaflet({
@@ -557,7 +558,7 @@ server <- function(input, output, session) {
     }
     html <- paste0(html, '</div>')
     return(html)
- 
+    
   }
 }
 

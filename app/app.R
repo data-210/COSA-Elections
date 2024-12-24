@@ -32,9 +32,20 @@ voter_turnout2023 <- read_csv('voter_turnout2023.csv')
 voter_turnout2023 <- voter_turnout2023 %>%
   mutate(`Voter Turnout (%)` = as.numeric(gsub("%", "", `Voter Turnout (%)`)) /100)
 
-# Create a color palette for the heatmap
+valid_precincts <- unique(c(mayor_results$Precinct, council_results$Precinct))
+voter_turnout2023 <- voter_turnout2023 %>%
+  filter(Precinct %in% valid_precincts)
+voter_turnout2023$Precinct <- as.integer(voter_turnout2023$Precinct)
+precincts_turnout <- precincts %>%
+  filter(NAME %in% valid_precincts) %>%
+  left_join(voter_turnout2023, by = c("NAME" = "Precinct")) %>%
+  filter(!is.na(`Voter Turnout (%)`))
+View(voter_turnout2023)
+View(precincts_turnout)
+
+# Create a color palette for voter turnout
 turnout_palette <- colorNumeric(
-  palette = c("blue", 'lightblue', 'yellow', 'orange', 'red'),
+  palette = c("blue", "lightblue", "yellow", "orange", "red"),
   domain = precincts_turnout$`Voter Turnout (%)`,
   na.color = "transparent"
 )

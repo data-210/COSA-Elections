@@ -31,16 +31,10 @@ View(may2023election)
 voter_turnout2023 <- read_csv('voter_turnout2023.csv')
 voter_turnout2023 <- voter_turnout2023 %>%
   mutate(`Voter Turnout (%)` = as.numeric(gsub("%", "", `Voter Turnout (%)`)) /100)
-
-valid_precincts <- unique(c(mayor_results$Precinct, council_results$Precinct))
-voter_turnout2023 <- voter_turnout2023 %>%
-  filter(Precinct %in% valid_precincts)
-voter_turnout2023$Precinct <- as.integer(voter_turnout2023$Precinct)
-precincts_turnout <- precincts %>%
-  filter(NAME %in% valid_precincts) %>%
-  left_join(voter_turnout2023, by = c("NAME" = "Precinct")) %>%
-  filter(!is.na(`Voter Turnout (%)`))
 View(voter_turnout2023)
+precincts_turnout <- precincts_with_correct_districts %>%
+  left_join(voter_turnout2023, by=c("NAME" = "Precinct"))
+
 View(precincts_turnout)
 
 # Create a color palette for voter turnout
@@ -544,7 +538,18 @@ server <- function(input, output, session) {
           color = 'red',
           weight = 2,
           bringToFront = TRUE
-        )
+        ),
+        label = ~NAME,
+        labelOptions = labelOptions(
+          style = list('color' = 'black', 'font-weight'='bold',
+                       'background-color' = 'white',
+                       'padding' = '5px',
+                       'border-radius'= '3px',
+                       'box-shadow' = '3px 3px rgba(0,0,0,0.25'),
+          textOnly = TRUE,
+          direction = 'right',
+          opacity = 0.9
+        ),
       ) %>%
       addLegend(
         pal = turnout_palette,

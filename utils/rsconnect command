@@ -1,0 +1,2 @@
+## Push updated shiny app to shinyapps.io
+rsconnect::deployApp(appName = "san-antonio-elections-v2", forceUpdate = TRUE)

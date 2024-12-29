@@ -12,7 +12,7 @@ precincts <- st_read('Bexar_County_Voter_Precincts.shp') %>%
   st_transform(crs = 4326)
 
 precincts$NAME <- as.integer(precincts$NAME)
-View(precincts)
+#View(precincts)
 
 districts <- st_read('RedistrictedCouncilDistricts2022.shp') %>%
   st_transform(crs = 4326)
@@ -26,16 +26,20 @@ precincts <- precincts %>% filter(!is.na(District))
 
 may2023election <- read_csv('may2023general_clean.csv') %>%
   mutate(ElectionYear = 2023)
-View(may2023election)
+#View(may2023election)
 
 voter_turnout2023 <- read_csv('voter_turnout2023.csv')
 voter_turnout2023 <- voter_turnout2023 %>%
   mutate(`Voter Turnout (%)` = as.numeric(gsub("%", "", `Voter Turnout (%)`)) /100)
-View(voter_turnout2023)
-precincts_turnout <- precincts_with_correct_districts %>%
+#View(voter_turnout2023)
+
+# Precinct checks
+precinct_district_clean <- read_csv("precinct_district_clean.csv")
+
+precincts_turnout <- precinct_district_clean %>%
   left_join(voter_turnout2023, by=c("NAME" = "Precinct"))
 
-View(precincts_turnout)
+#View(precincts_turnout)
 
 # Create a color palette for voter turnout
 turnout_palette <- colorNumeric(
@@ -101,13 +105,13 @@ council_palette <- colorFactor(
 council_results <- council_results %>%
   mutate(WinnerColor = council_palette(Winner))
 
-View(council_results)
+#View(council_results)
 
 # Voter turnout
 valid_precincts <- unique(mayor_results$Precinct)
 voter_turnout2023 <- voter_turnout2023 %>%
   filter(Precinct %in% valid_precincts)
-View(voter_turnout2023)
+#View(voter_turnout2023)
 
 precincts_turnout <- precincts %>%
   filter(NAME %in% valid_precincts) %>%

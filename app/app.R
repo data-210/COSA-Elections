@@ -23,9 +23,12 @@ districts <- districts %>% arrange(as.numeric(District))
 precincts <- st_join(precincts, districts['District'])
 precincts <- precincts %>% filter(!is.na(District))
 
-
+# Load election data
 may2023election <- read_csv('may2023general_clean.csv') %>%
-  mutate(ElectionYear = 2023)
+  mutate(ElectionYear = 2023, ElectionType = "General")
+
+june2023runoff <- read.csv('june2023runoff_clean.csv') %>%
+  mutate(ElectionYear = 2023, ElectionType="Runoff")
 #View(may2023election)
 
 voter_turnout2023 <- read_csv('voter_turnout2023.csv')

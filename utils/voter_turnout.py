@@ -6,7 +6,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 DATA = Path.joinpath(REPO, 'data')
 
-pdf_path = Path.joinpath(DATA, 'may2023general.pdf')
+pdf_path = Path.joinpath(DATA, 'june2023runoff.pdf')
 
 # Initialize empty list to store extracted results
 turnout_data = []
@@ -51,6 +51,6 @@ with pdfplumber.open(pdf_path) as pdf:
 df_turnout = pd.DataFrame(turnout_data)
 
 # Save the DataFrame to a new CSV file
-df_turnout.to_csv('voter_turnout2023.csv', index=False)
+df_turnout.to_csv('voter_turnout2023runoff.csv', index=False)
 
 #print(f"Voter Turnout CSV saved to: {turnout_csv_path}")

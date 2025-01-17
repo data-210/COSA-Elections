@@ -1,0 +1,267 @@
+,Precinct,Race,Candidate,Total Votes,Vote Percentage
+2,1001,District 1,Sukh Kaur,72,69.9
+3,1001,District 1,Mario Bravo,31,30.1
+6,1008,District 1,Sukh Kaur,173,59.25
+7,1008,District 1,Mario Bravo,119,40.75
+10,2004,District 1,Sukh Kaur,81,76.42
+11,2004,District 1,Mario Bravo,25,23.58
+14,2005,District 7,Dan Rossiter,25,30.49
+15,2005,District 7,Marina Alderete Gavito,57,69.51
+18,2006,District 1,Sukh Kaur,1,50
+19,2006,District 1,Mario Bravo,1,50
+22,2010,District 1,Sukh Kaur,70,51.47
+23,2010,District 1,Mario Bravo,66,48.53
+26,2013,District 7,Dan Rossiter,16,23.19
+27,2013,District 7,Marina Alderete Gavito,53,76.81
+30,2014,District 7,Dan Rossiter,19,24.68
+31,2014,District 7,Marina Alderete Gavito,58,75.32
+34,2023,District 7,Dan Rossiter,32,23.36
+35,2023,District 7,Marina Alderete Gavito,105,76.64
+38,2024,District 7,Dan Rossiter,30,31.91
+39,2024,District 7,Marina Alderete Gavito,64,68.09
+42,2025,District 7,Dan Rossiter,81,36.49
+43,2025,District 7,Marina Alderete Gavito,141,63.51
+46,2026,District 7,Dan Rossiter,57,34.55
+47,2026,District 7,Marina Alderete Gavito,108,65.45
+50,2027,District 7,Dan Rossiter,62,32.98
+51,2027,District 7,Marina Alderete Gavito,126,67.02
+54,2028,District 7,Dan Rossiter,96,36.23
+55,2028,District 7,Marina Alderete Gavito,169,63.77
+58,2035,District 1,Sukh Kaur,204,61.26
+59,2035,District 1,Mario Bravo,129,38.74
+62,2036,District 1,Sukh Kaur,284,65.74
+63,2036,District 1,Mario Bravo,148,34.26
+66,2037,District 7,Dan Rossiter,76,48.1
+67,2037,District 7,Marina Alderete Gavito,82,51.9
+70,2038,District 1,Sukh Kaur,141,68.12
+71,2038,District 1,Mario Bravo,66,31.88
+74,2039,District 1,Sukh Kaur,109,55.61
+75,2039,District 1,Mario Bravo,87,44.39
+78,2040,District 7,Dan Rossiter,58,34.73
+79,2040,District 7,Marina Alderete Gavito,109,65.27
+82,2041,District 7,Dan Rossiter,45,31.25
+83,2041,District 7,Marina Alderete Gavito,99,68.75
+86,2042,District 7,Dan Rossiter,24,37.5
+87,2042,District 7,Marina Alderete Gavito,40,62.5
+90,2045,District 7,Dan Rossiter,52,24.41
+91,2045,District 7,Marina Alderete Gavito,161,75.59
+94,2046,District 7,Dan Rossiter,93,31
+95,2046,District 7,Marina Alderete Gavito,207,69
+98,2047,District 7,Dan Rossiter,54,28.88
+99,2047,District 7,Marina Alderete Gavito,133,71.12
+102,2048,District 1,Sukh Kaur,46,46.46
+103,2048,District 1,Mario Bravo,53,53.54
+106,2050,District 7,Dan Rossiter,58,37.18
+107,2050,District 7,Marina Alderete Gavito,98,62.82
+110,2051,District 1,Sukh Kaur,22,57.89
+111,2051,District 1,Mario Bravo,16,42.11
+114,2052,District 1,Sukh Kaur,27,40.91
+115,2052,District 1,Mario Bravo,39,59.09
+118,2053,District 1,Sukh Kaur,61,70.11
+119,2053,District 1,Mario Bravo,26,29.89
+122,2054,District 1,Sukh Kaur,146,63.76
+123,2054,District 1,Mario Bravo,83,36.24
+126,2055,District 1,Sukh Kaur,149,74.5
+127,2055,District 1,Mario Bravo,51,25.5
+130,2056,District 1,Sukh Kaur,57,44.19
+131,2056,District 1,Mario Bravo,72,55.81
+134,2057,District 1,Sukh Kaur,69,60
+135,2057,District 1,Mario Bravo,46,40
+138,2058,District 1,Sukh Kaur,69,44.81
+139,2058,District 1,Mario Bravo,85,55.19
+142,2059,District 1,Sukh Kaur,76,56.72
+143,2059,District 1,Mario Bravo,58,43.28
+146,2060,District 1,Sukh Kaur,98,72.59
+147,2060,District 1,Mario Bravo,37,27.41
+150,2062,District 1,Sukh Kaur,63,36.84
+151,2062,District 1,Mario Bravo,108,63.16
+154,2064,District 1,Sukh Kaur,114,43.18
+155,2064,District 1,Mario Bravo,150,56.82
+158,2066,District 7,Dan Rossiter,164,41.21
+159,2066,District 7,Marina Alderete Gavito,234,58.79
+162,2067,District 1,Sukh Kaur,21,60
+163,2067,District 1,Mario Bravo,14,40
+166,2073,District 1,Sukh Kaur,55,47.41
+167,2073,District 1,Mario Bravo,61,52.59
+170,2076,District 7,Dan Rossiter,64,43.54
+171,2076,District 7,Marina Alderete Gavito,83,56.46
+174,2080,District 1,Sukh Kaur,46,48.42
+175,2080,District 1,Mario Bravo,49,51.58
+178,2081,District 7,Dan Rossiter,22,44.9
+179,2081,District 7,Marina Alderete Gavito,27,55.1
+182,2082,District 1,Sukh Kaur,58,45.67
+183,2082,District 1,Mario Bravo,69,54.33
+186,2083,District 7,Dan Rossiter,48,44.04
+187,2083,District 7,Marina Alderete Gavito,61,55.96
+190,2084,District 7,Dan Rossiter,278,51.29
+191,2084,District 7,Marina Alderete Gavito,264,48.71
+194,2085,District 1,Sukh Kaur,61,42.66
+195,2085,District 1,Mario Bravo,82,57.34
+198,2086,District 7,Dan Rossiter,122,41.78
+199,2086,District 7,Marina Alderete Gavito,170,58.22
+202,2090,District 7,Dan Rossiter,6,18.75
+203,2090,District 7,Marina Alderete Gavito,26,81.25
+206,2091,District 7,Dan Rossiter,26,29.21
+207,2091,District 7,Marina Alderete Gavito,63,70.79
+210,2092,District 1,Sukh Kaur,20,74.07
+211,2092,District 1,Mario Bravo,7,25.93
+214,2094,District 1,Sukh Kaur,25,86.21
+215,2094,District 1,Mario Bravo,4,13.79
+218,2096,District 7,Dan Rossiter,29,47.54
+219,2096,District 7,Marina Alderete Gavito,32,52.46
+222,2099,District 7,Dan Rossiter,50,40
+223,2099,District 7,Marina Alderete Gavito,75,60
+226,2100,District 1,Sukh Kaur,40,42.11
+227,2100,District 1,Mario Bravo,55,57.89
+230,2104,District 1,Sukh Kaur,16,84.21
+231,2104,District 1,Mario Bravo,3,15.79
+234,2108,District 7,Dan Rossiter,98,55.68
+235,2108,District 7,Marina Alderete Gavito,78,44.32
+238,2109,District 1,Sukh Kaur,0,
+239,2109,District 1,Mario Bravo,0,
+242,2110,District 7,Dan Rossiter,56,46.28
+243,2110,District 7,Marina Alderete Gavito,65,53.72
+246,2114,District 1,Sukh Kaur,76,52.05
+247,2114,District 1,Mario Bravo,70,47.95
+250,2116,District 1,Sukh Kaur,0,
+251,2116,District 1,Mario Bravo,0,
+254,2119,District 7,Dan Rossiter,2,33.33
+255,2119,District 7,Marina Alderete Gavito,4,66.67
+258,2121,District 1,Sukh Kaur,18,81.82
+259,2121,District 1,Mario Bravo,4,18.18
+262,2123,District 7,Dan Rossiter,24,40
+263,2123,District 7,Marina Alderete Gavito,36,60
+266,2124,District 7,Dan Rossiter,34,38.64
+267,2124,District 7,Marina Alderete Gavito,54,61.36
+270,2126,District 7,Dan Rossiter,18,50
+271,2126,District 7,Marina Alderete Gavito,18,50
+274,2129,District 1,Sukh Kaur,0,
+275,2129,District 1,Mario Bravo,0,
+278,2130,District 7,Dan Rossiter,40,34.19
+279,2130,District 7,Marina Alderete Gavito,77,65.81
+282,2131,District 1,Sukh Kaur,15,71.43
+283,2131,District 1,Mario Bravo,6,28.57
+286,2132,District 1,Sukh Kaur,0,
+287,2132,District 1,Mario Bravo,0,
+290,2134,District 1,Sukh Kaur,26,65
+291,2134,District 1,Mario Bravo,14,35
+294,2135,District 1,Sukh Kaur,22,61.11
+295,2135,District 1,Mario Bravo,14,38.89
+298,2137,District 1,Sukh Kaur,85,64.39
+299,2137,District 1,Mario Bravo,47,35.61
+302,2138,District 1,Sukh Kaur,81,62.79
+303,2138,District 1,Mario Bravo,48,37.21
+306,2139,District 7,Dan Rossiter,36,30
+307,2139,District 7,Marina Alderete Gavito,84,70
+310,2142,District 7,Dan Rossiter,5,38.46
+311,2142,District 7,Marina Alderete Gavito,8,61.54
+314,2144,District 1,Sukh Kaur,143,56.3
+315,2144,District 1,Mario Bravo,111,43.7
+318,2150,District 1,Sukh Kaur,0,
+319,2150,District 1,Mario Bravo,0,
+322,2151,District 7,Dan Rossiter,0,
+323,2151,District 7,Marina Alderete Gavito,0,
+326,2152,District 1,Sukh Kaur,20,57.14
+327,2152,District 1,Mario Bravo,15,42.86
+330,2153,District 7,Dan Rossiter,1,20
+331,2153,District 7,Marina Alderete Gavito,4,80
+334,2155,District 1,Sukh Kaur,0,
+335,2155,District 1,Mario Bravo,0,
+338,2157,District 7,Dan Rossiter,0,
+339,2157,District 7,Marina Alderete Gavito,0,
+342,2161,District 7,Dan Rossiter,16,55.17
+343,2161,District 7,Marina Alderete Gavito,13,44.83
+346,2163,District 7,Dan Rossiter,87,50.58
+347,2163,District 7,Marina Alderete Gavito,85,49.42
+350,2164,District 7,Dan Rossiter,24,31.58
+351,2164,District 7,Marina Alderete Gavito,52,68.42
+354,2165,District 7,Dan Rossiter,68,37.78
+355,2165,District 7,Marina Alderete Gavito,112,62.22
+358,2166,District 7,Dan Rossiter,54,37.5
+359,2166,District 7,Marina Alderete Gavito,90,62.5
+362,2168,District 7,Dan Rossiter,32,41.56
+363,2168,District 7,Marina Alderete Gavito,45,58.44
+366,2169,District 7,Dan Rossiter,39,34.82
+367,2169,District 7,Marina Alderete Gavito,73,65.18
+370,2170,District 7,Dan Rossiter,62,41.06
+371,2170,District 7,Marina Alderete Gavito,89,58.94
+374,2171,District 7,Dan Rossiter,49,44.95
+375,2171,District 7,Marina Alderete Gavito,60,55.05
+378,2172,District 7,Dan Rossiter,8,40
+379,2172,District 7,Marina Alderete Gavito,12,60
+382,2173,District 7,Dan Rossiter,32,33.33
+383,2173,District 7,Marina Alderete Gavito,64,66.67
+386,2174,District 7,Dan Rossiter,73,25.89
+387,2174,District 7,Marina Alderete Gavito,209,74.11
+390,2176,District 7,Dan Rossiter,67,59.82
+391,2176,District 7,Marina Alderete Gavito,45,40.18
+394,2177,District 1,Sukh Kaur,0,
+395,2177,District 1,Mario Bravo,0,
+398,2178,District 7,Dan Rossiter,46,25.41
+399,2178,District 7,Marina Alderete Gavito,135,74.59
+402,2179,District 7,Dan Rossiter,0,
+403,2179,District 7,Marina Alderete Gavito,0,
+406,3004,District 1,Sukh Kaur,0,
+407,3004,District 1,Mario Bravo,0,
+410,3006,District 1,Sukh Kaur,102,58.29
+411,3006,District 1,Mario Bravo,73,41.71
+414,3011,District 1,Sukh Kaur,122,58.65
+415,3011,District 1,Mario Bravo,86,41.35
+418,3013,District 1,Sukh Kaur,132,58.67
+419,3013,District 1,Mario Bravo,93,41.33
+422,3014,District 1,Sukh Kaur,33,53.23
+423,3014,District 1,Mario Bravo,29,46.77
+426,3015,District 1,Sukh Kaur,94,51.37
+427,3015,District 1,Mario Bravo,89,48.63
+430,3024,District 1,Sukh Kaur,0,
+431,3024,District 1,Mario Bravo,0,
+434,3031,District 1,Sukh Kaur,1,16.67
+435,3031,District 1,Mario Bravo,5,83.33
+438,3053,District 1,Sukh Kaur,173,68.11
+439,3053,District 1,Mario Bravo,81,31.89
+442,3063,District 1,Sukh Kaur,193,60.69
+443,3063,District 1,Mario Bravo,125,39.31
+446,3064,District 1,Sukh Kaur,41,57.75
+447,3064,District 1,Mario Bravo,30,42.25
+450,3066,District 1,Sukh Kaur,168,52.17
+451,3066,District 1,Mario Bravo,154,47.83
+454,3111,District 1,Sukh Kaur,0,
+455,3111,District 1,Mario Bravo,0,
+458,3131,District 1,Sukh Kaur,0,
+459,3131,District 1,Mario Bravo,0,
+462,3147,District 1,Sukh Kaur,4,80
+463,3147,District 1,Mario Bravo,1,20
+466,3150,District 1,Sukh Kaur,6,75
+467,3150,District 1,Mario Bravo,2,25
+470,3166,District 1,Sukh Kaur,36,53.73
+471,3166,District 1,Mario Bravo,31,46.27
+474,3167,District 1,Sukh Kaur,0,0
+475,3167,District 1,Mario Bravo,1,100
+478,3175,District 1,Sukh Kaur,45,56.96
+479,3175,District 1,Mario Bravo,34,43.04
+482,3182,District 1,Sukh Kaur,73,64.6
+483,3182,District 1,Mario Bravo,40,35.4
+486,3204,District 1,Sukh Kaur,0,
+487,3204,District 1,Mario Bravo,0,
+490,3205,District 1,Sukh Kaur,0,
+491,3205,District 1,Mario Bravo,0,
+494,4001,District 1,Sukh Kaur,176,75.86
+495,4001,District 1,Mario Bravo,56,24.14
+498,4015,District 1,Sukh Kaur,125,69.44
+499,4015,District 1,Mario Bravo,55,30.56
+502,4017,District 1,Sukh Kaur,138,54.33
+503,4017,District 1,Mario Bravo,116,45.67
+506,4018,District 1,Sukh Kaur,166,63.12
+507,4018,District 1,Mario Bravo,97,36.88
+510,4155,District 1,Sukh Kaur,234,69.23
+511,4155,District 1,Mario Bravo,104,30.77
+514,4157,District 1,Sukh Kaur,144,53.14
+515,4157,District 1,Mario Bravo,127,46.86
+518,4203,District 1,Sukh Kaur,13,65
+519,4203,District 1,Mario Bravo,7,35
+522,4211,District 1,Sukh Kaur,2,40
+523,4211,District 1,Mario Bravo,3,60
+526,4217,District 1,Sukh Kaur,3,75
+527,4217,District 1,Mario Bravo,1,25
+530,4228,District 1,Sukh Kaur,56,80
+531,4228,District 1,Mario Bravo,14,20

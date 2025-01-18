@@ -26,21 +26,46 @@ precincts <- precincts %>% filter(!is.na(District))
 # Load election data
 may2023election <- read_csv('may2023general_clean.csv') %>%
   mutate(ElectionYear = 2023, ElectionType = "General")
+may2023election <- may2023election %>% select(-...1)
 
 june2023runoff <- read.csv('june2023runoff_clean.csv') %>%
   mutate(ElectionYear = 2023, ElectionType="Runoff")
+june2023runoff <- june2023runoff %>% select(-X)
+june2023runoff <- june2023runoff %>%
+  rename(`Total Votes` = `Total.Votes`, `Vote Percentage` = `Vote.Percentage`)
+View(june2023runoff)
+
 #View(may2023election)
 
-voter_turnout2023 <- read_csv('voter_turnout2023.csv')
-voter_turnout2023 <- voter_turnout2023 %>%
-  mutate(`Voter Turnout (%)` = as.numeric(gsub("%", "", `Voter Turnout (%)`)) /100)
-#View(voter_turnout2023)
+# Combine election datasets
+all_elections <- bind_rows(may2023election, june2023runoff)
+View(all_elections)
+all_elections <- all_elections %>%
+  mutate(`Total Votes` = replace_na(`Total Votes`, 0),
+         `Vote Percentage` = replace_na(`Vote Percentage`, 0))
+
+# Voter turnout
+voter_turnout2023_general <- read_csv('voter_turnout2023.csv')
+voter_turnout2023_general <- voter_turnout2023_general %>%
+  mutate(`Voter Turnout (%)` = as.numeric(gsub("%", "", `Voter Turnout (%)`)) /100,
+         ElectionYear = 2023, ElectionType = "General")
+
+voter_turnout2023_runoff <- read_csv('voter_turnout2023runoff.csv')
+voter_turnout2023_runoff <- voter_turnout2023_runoff %>%
+  mutate(`Voter Turnout (%)` = as.numeric(gsub("%", "", `Voter Turnout (%)`)) /100,
+         ElectionYear = 2023, ElectionType = "Runoff")
+View(voter_turnout2023_runoff)
+
+# Combine voter turnout datasets
+all_voter_turnout <- bind_rows(voter_turnout2023_general, voter_turnout2023_runoff)
+View(all_voter_turnout)
 
 # Precinct checks
 precinct_district_clean <- read_csv("precinct_district_clean.csv")
 
 precincts_turnout <- precinct_district_clean %>%
-  left_join(voter_turnout2023, by=c("NAME" = "Precinct"))
+  left_join(all_voter_turnout, by=c("NAME" = "Precinct"))
+
 
 #View(precincts_turnout)
 
@@ -52,22 +77,20 @@ turnout_palette <- colorNumeric(
 )
 
 # Aggregate Mayor's race results
-mayor_results <- may2023election %>%
+mayor_results <- all_elections %>%
   filter(Race == 'Mayor') %>%
-  arrange(Precinct, desc(`Total Votes`)) %>%
-  group_by(Precinct, ElectionYear) %>%
+  group_by(Precinct, ElectionYear, ElectionType) %>%
   summarise(
     Results = paste(
-      Candidate[!is.na(`Vote Percentage`)], ": ", 
-      `Total Votes`[!is.na(`Vote Percentage`)], " votes (", 
-      round(`Vote Percentage`[!is.na(`Vote Percentage`)], 1), "%)",
+      Candidate, ": ", `Total Votes`, " votes (",
+      round(`Vote Percentage`, 1), "%)",
       collapse = "<br>"
-    ), 
+    ),
     MaxVoteShare = max(`Vote Percentage`, na.rm = TRUE),
     Winner = Candidate[which.max(`Vote Percentage`)],
     .groups = 'drop'
-  ) 
-
+  )
+# View(mayor_results)
 mayoral_winners = unique(mayor_results$Winner)
 
 # Mayoral palette
@@ -79,26 +102,42 @@ mayor_results <- mayor_results %>%
   mutate(WinnerColor = mayoral_palette(Winner))
 
 
-# Aggregate City Council results
-council_results <- may2023election %>%
+#Aggregate City Council results
+council_results <- all_elections %>%
   filter(str_detect(Race, 'District')) %>%
   mutate(
     District = as.numeric(str_extract(Race, "\\d+"))
   ) %>%
-  arrange(Precinct, desc(`Total Votes`)) %>%
-  group_by(Precinct, District, ElectionYear) %>%
+  group_by(Precinct, District, ElectionYear, ElectionType) %>%
   summarise(
     Results = paste(
-      Candidate[!is.na(`Vote Percentage`)], ": ", 
-      `Total Votes`[!is.na(`Vote Percentage`)], " votes (", 
-      round(`Vote Percentage`[!is.na(`Vote Percentage`)], 1), "%)",
+      Candidate, ": ", `Total Votes`, " votes (",
+      round(`Vote Percentage`, 1), "%)",
       collapse = "<br>"
-    ), 
+    ),
     MaxVoteShare = max(`Vote Percentage`, na.rm = TRUE),
     Winner = Candidate[which.max(`Vote Percentage`)],
     .groups = 'drop'
   )
-
+# council_results <- all_elections %>%
+#   filter(str_detect(Race, 'District')) %>%
+#   mutate(
+#     District = as.numeric(str_extract(Race, "\\d+"))
+#   ) %>%
+#   arrange(Precinct, desc(`Total Votes`)) %>%
+#   group_by(Precinct, District, ElectionYear, ElectionType) %>%
+#   summarise(
+#     Results = paste(
+#       Candidate[!is.na(`Vote Percentage`)], ": ",
+#       `Total Votes`[!is.na(`Vote Percentage`)], " votes (",
+#       round(`Vote Percentage`[!is.na(`Vote Percentage`)], 1), "%)",
+#       collapse = "<br>"
+#     ),
+#     MaxVoteShare = max(`Vote Percentage`, na.rm = TRUE),
+#     Winner = Candidate[which.max(ifelse(is.na(`Vote Percentage`), 0, `Vote Percentage`))],
+#     .groups = 'drop'
+#   )
+View(council_results)
 council_winners <- unique(council_results$Winner)
 # Council Palette
 council_palette <- colorFactor(
@@ -112,13 +151,13 @@ council_results <- council_results %>%
 
 # Voter turnout
 valid_precincts <- unique(mayor_results$Precinct)
-voter_turnout2023 <- voter_turnout2023 %>%
+all_voter_turnout <- all_voter_turnout %>%
   filter(Precinct %in% valid_precincts)
 #View(voter_turnout2023)
 
 precincts_turnout <- precincts %>%
   filter(NAME %in% valid_precincts) %>%
-  left_join(voter_turnout2023, by = c("NAME" = "Precinct"))
+  left_join(all_voter_turnout, by = c("NAME" = "Precinct"))
 
 
 ##########################################################################################
@@ -135,7 +174,9 @@ ui <- dashboardPage(
       menuItem("City Council Elections", tabName = "council", icon = icon("users")),
       menuItem("Voter Turnout", tabName = "turnout", icon = icon("chart-bar")),
       selectInput("electionYear", "Select Election Year:",
-                  choices = unique(mayor_results$ElectionYear), selected = 2023),
+                  choices = unique(all_elections$ElectionYear), selected = 2023),
+      selectInput("electionType", "Select Election Type:",
+                  choices = unique(all_elections$ElectionType), selected = "General"),
       conditionalPanel(
         condition = "input.tabs == 'council'",
         selectInput("councilDistrict", "Select Council District:",
@@ -202,6 +243,9 @@ ui <- dashboardPage(
             width = 12,
             dataTableOutput("councilTable")
           )
+        ),
+        fluidRow(
+          uiOutput("runoffMessage")
         )
       ),
       # Voter Turnout Tab
@@ -232,11 +276,18 @@ ui <- dashboardPage(
 ######################################################################################
 ## Server ##
 server <- function(input, output, session) {
+  # Debugging input$electionType
+  observe({
+    print(paste("Selected ElectionType:", input$electionType))
+  })
   
   # Mayor's Table
   filteredMayorTableData <- reactive({
-    mayor_data <- may2023election %>%
-      filter(Race == 'Mayor') %>%
+    print("Available ElectionType values in dataset:")
+    print(unique(all_elections$ElectionType))
+    
+    mayor_data <- all_elections %>%
+      filter(Race == 'Mayor', ElectionYear == input$electionYear, ElectionType == input$electionType) %>%
       group_by(Candidate) %>%
       summarise(
         `Total Votes` = sum(`Total Votes`, na.rm = TRUE),
@@ -253,8 +304,8 @@ server <- function(input, output, session) {
   
   # Council Table
   filteredCouncilTableData <- reactive({
-    council_data <- may2023election %>%
-      filter(str_detect(Race, "District")) %>%
+    council_data <- all_elections %>%
+      filter(str_detect(Race, "District"), ElectionYear == input$electionYear, ElectionType == input$electionType) %>%
       mutate(
         District = as.numeric(str_extract(Race, "\\d+"))
       )
@@ -300,7 +351,7 @@ server <- function(input, output, session) {
   # Reactive data for Mayor's map
   filteredMayorData <- reactive({
     data <- mayor_results %>%
-      filter(ElectionYear == input$electionYear)
+      filter(ElectionYear == input$electionYear, ElectionType == input$electionType)
     if (input$mayorDistrict != "All") {
       valid_precincts <- precincts %>%
         filter(District == as.numeric(input$mayorDistrict)) %>%
@@ -314,7 +365,7 @@ server <- function(input, output, session) {
   # Reactive data for Council map
   filteredCouncilData <- reactive({
     council_data <- council_results %>%
-      filter(ElectionYear == input$electionYear)
+      filter(ElectionYear == input$electionYear, ElectionType == input$electionType)
     if (input$councilDistrict != "All") {
       council_data <- council_data %>%
         filter(District == as.numeric(input$councilDistrict))
@@ -328,13 +379,17 @@ server <- function(input, output, session) {
   
   # Reactive data for Voter Turnout Map
   filteredTurnoutData <- reactive({
-    if (input$turnoutDistrict == "All") {
-      precincts_turnout
-    } else {
-      precincts_turnout %>%
-        filter(District == as.numeric(input$turnoutDistrict))
-    }
+    precincts_turnout %>%
+      filter(ElectionYear == input$electionYear, ElectionType == input$electionType)
   })
+  # filteredTurnoutData <- reactive({
+  #   if (input$turnoutDistrict == "All") {
+  #     precincts_turnout
+  #   } else {
+  #     precincts_turnout %>%
+  #       filter(District == as.numeric(input$turnoutDistrict))
+  #   }
+  # })
   
   # Reactive data for Voter Turnout Table
   filteredTurnoutTableData <- reactive({
@@ -566,6 +621,37 @@ server <- function(input, output, session) {
         labFormat = labelFormat(transform = function(x) round(x * 100,1), suffix = '%')
       )
     
+  })
+  # Check if the selected district had a runoff election
+  runoffMessage <- reactive({
+    selected_district <- input$councilDistrict
+    selected_year <- input$electionYear
+    
+    # Filter runoff data for the selected district and year
+    has_runoff <- council_results %>%
+      filter(
+        ElectionType == "Runoff",
+        ElectionYear == selected_year,
+        District == as.numeric(selected_district)
+      ) %>%
+      nrow() > 0
+    
+    if (!has_runoff) {
+      paste("District", selected_district, "did not have a runoff election in", selected_year)
+    } else {
+      NULL
+    }
+  })
+  
+  # Render the message
+  output$runoffMessage <- renderUI({
+    message <- runoffMessage()
+    if (!is.null(message)) {
+      div(
+        style = "color: red; font-weight: bold; margin-top: 10px;",
+        message
+      )
+    }
   })
   
   # Custom HTML legend function

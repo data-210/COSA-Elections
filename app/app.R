@@ -33,13 +33,13 @@ june2023runoff <- read.csv('june2023runoff_clean.csv') %>%
 june2023runoff <- june2023runoff %>% select(-X)
 june2023runoff <- june2023runoff %>%
   rename(`Total Votes` = `Total.Votes`, `Vote Percentage` = `Vote.Percentage`)
-View(june2023runoff)
+#View(june2023runoff)
 
 #View(may2023election)
 
 # Combine election datasets
 all_elections <- bind_rows(may2023election, june2023runoff)
-View(all_elections)
+#View(all_elections)
 all_elections <- all_elections %>%
   mutate(`Total Votes` = replace_na(`Total Votes`, 0),
          `Vote Percentage` = replace_na(`Vote Percentage`, 0))
@@ -54,11 +54,11 @@ voter_turnout2023_runoff <- read_csv('voter_turnout2023runoff.csv')
 voter_turnout2023_runoff <- voter_turnout2023_runoff %>%
   mutate(`Voter Turnout (%)` = as.numeric(gsub("%", "", `Voter Turnout (%)`)) /100,
          ElectionYear = 2023, ElectionType = "Runoff")
-View(voter_turnout2023_runoff)
+#View(voter_turnout2023_runoff)
 
 # Combine voter turnout datasets
 all_voter_turnout <- bind_rows(voter_turnout2023_general, voter_turnout2023_runoff)
-View(all_voter_turnout)
+#View(all_voter_turnout)
 
 # Precinct checks
 precinct_district_clean <- read_csv("precinct_district_clean.csv")
@@ -119,25 +119,7 @@ council_results <- all_elections %>%
     Winner = Candidate[which.max(`Vote Percentage`)],
     .groups = 'drop'
   )
-# council_results <- all_elections %>%
-#   filter(str_detect(Race, 'District')) %>%
-#   mutate(
-#     District = as.numeric(str_extract(Race, "\\d+"))
-#   ) %>%
-#   arrange(Precinct, desc(`Total Votes`)) %>%
-#   group_by(Precinct, District, ElectionYear, ElectionType) %>%
-#   summarise(
-#     Results = paste(
-#       Candidate[!is.na(`Vote Percentage`)], ": ",
-#       `Total Votes`[!is.na(`Vote Percentage`)], " votes (",
-#       round(`Vote Percentage`[!is.na(`Vote Percentage`)], 1), "%)",
-#       collapse = "<br>"
-#     ),
-#     MaxVoteShare = max(`Vote Percentage`, na.rm = TRUE),
-#     Winner = Candidate[which.max(ifelse(is.na(`Vote Percentage`), 0, `Vote Percentage`))],
-#     .groups = 'drop'
-#   )
-View(council_results)
+
 council_winners <- unique(council_results$Winner)
 # Council Palette
 council_palette <- colorFactor(

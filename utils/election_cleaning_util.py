@@ -4,7 +4,7 @@ from pathlib import Path
 # Load CSV file
 REPO = Path(__file__).resolve().parents[1]
 DATA = Path.joinpath(REPO, 'data')
-csv_file_path = Path.joinpath(DATA, 'may2021general.csv')
+csv_file_path = Path.joinpath(DATA, 'june2021runoff.csv')
 
 # Read in CSV
 df = pd.read_csv(csv_file_path)
@@ -98,4 +98,4 @@ df_cleaned['Vote Percentage'] = (df_cleaned['Total Votes'] / total_votes_per_rac
 # Round Vote Percentage to 2 decimal points
 df_cleaned['Vote Percentage'] = df_cleaned['Vote Percentage'].round(2)
 
-df_cleaned.to_csv('may2021general_clean.csv')
+df_cleaned.to_csv('june2021runoff_clean.csv')

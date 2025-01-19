@@ -4,7 +4,7 @@ from pathlib import Path
 # Load CSV file
 REPO = Path(__file__).resolve().parents[1]
 DATA = Path.joinpath(REPO, 'data')
-csv_file_path = Path.joinpath(DATA, 'may2021general_clean.csv')
+csv_file_path = Path.joinpath(DATA, 'june2021runoff_clean.csv')
 
 # Read in CSV
 df = pd.read_csv(csv_file_path)
@@ -47,7 +47,7 @@ df = df.dropna(subset=['Candidate', 'Total Votes', 'Vote Percentage'], how='all'
 df = df[['Precinct', 'Race', 'Candidate', 'Total Votes', 'Vote Percentage']]
 
 # Save the cleaned CSV
-cleaned_file_path = "may2021general_cleaned.csv"
+cleaned_file_path = "june2021runoff_cleaned.csv"
 df.to_csv(cleaned_file_path, index=False)
 
 print(f"Cleaned CSV saved to: {cleaned_file_path}")

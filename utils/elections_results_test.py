@@ -7,7 +7,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 DATA = Path.joinpath(REPO, 'data')
 
-pdf_path = Path.joinpath(DATA, 'may2021general.pdf')
+pdf_path = Path.joinpath(DATA, 'june2021runoff.pdf')
 
 
 # Initialize empty list to store extracted results
@@ -71,7 +71,7 @@ df = pd.DataFrame(data)
 print(df.head())  # This will just print the first few rows to verify
 
 # Save the DataFrame to a CSV file
-csv_path = 'may2021general.csv'
+csv_path = 'june2021runoff.csv'
 df.to_csv(csv_path, index=False)
 
 print(f"CSV saved to: {csv_path}")

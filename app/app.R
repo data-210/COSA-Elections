@@ -19,11 +19,37 @@ districts <- st_read('RedistrictedCouncilDistricts2022.shp') %>%
 
 districts <- districts %>% arrange(as.numeric(District))
 
+old_districts <- st_read('CouncilDistricts.shp') %>%
+  st_transform(crs = 4326) %>%
+  st_make_valid()
+
 # Spatial join precincts & districts
 precincts <- st_join(precincts, districts['District'])
 precincts <- precincts %>% filter(!is.na(District))
 
-# Load election data
+# Load election data & turnout data
+# 2021
+may2021general <- read_csv('may2021general_cleaned.csv') %>%
+  mutate(ElectionYear = 2021, ElectionType = 'General')
+june2021runoff <- read_csv('june2021runoff_cleaned.csv') %>%
+  mutate(ElectionYear = 2021, ElectionType = 'Runoff')
+elections_2021 <- bind_rows(may2021general, june2021runoff) %>%
+  mutate(
+    `Total Votes` = replace_na(`Total Votes`, 0),
+    `Vote Percentage` = replace_na(`Vote Percentage`, 0)
+  )
+voter_turnout2021general <- read_csv('voter_turnout2021general.csv') %>%
+  mutate(
+    `Voter Turnout (%)` = as.numeric(gsub("%", "", `Voter Turnout (%)`)) / 100,
+    ElectionYear = 2021, ElectionType = "General"
+  )
+voter_turnout2021runoff <- read_csv('voter_turnout2021runoff.csv') %>%
+  mutate(
+    `Voter Turnout (%)` = as.numeric(gsub("%", "", `Voter Turnout (%)`)) / 100,
+    ElectionYear = 2021, ElectionType = "Runoff"
+  )
+voter_turnout_2021 <- bind_rows(voter_turnout2021general, voter_turnout2021runoff)
+
 may2023election <- read_csv('may2023general_clean.csv') %>%
   mutate(ElectionYear = 2023, ElectionType = "General")
 may2023election <- may2023election %>% select(-...1)
@@ -33,16 +59,14 @@ june2023runoff <- read.csv('june2023runoff_clean.csv') %>%
 june2023runoff <- june2023runoff %>% select(-X)
 june2023runoff <- june2023runoff %>%
   rename(`Total Votes` = `Total.Votes`, `Vote Percentage` = `Vote.Percentage`)
-#View(june2023runoff)
-
-#View(may2023election)
+elections_2023 <- bind_rows(may2023election, june2023runoff) %>%
+  mutate(
+    `Total Votes` = replace_na(`Total Votes`, 0),
+    `Vote Percentage` = replace_na(`Vote Percentage`, 0)
+  )
 
 # Combine election datasets
-all_elections <- bind_rows(may2023election, june2023runoff)
-#View(all_elections)
-all_elections <- all_elections %>%
-  mutate(`Total Votes` = replace_na(`Total Votes`, 0),
-         `Vote Percentage` = replace_na(`Vote Percentage`, 0))
+all_elections <- bind_rows(elections_2021, elections_2023)
 
 # Voter turnout
 voter_turnout2023_general <- read_csv('voter_turnout2023.csv')
@@ -54,11 +78,11 @@ voter_turnout2023_runoff <- read_csv('voter_turnout2023runoff.csv')
 voter_turnout2023_runoff <- voter_turnout2023_runoff %>%
   mutate(`Voter Turnout (%)` = as.numeric(gsub("%", "", `Voter Turnout (%)`)) /100,
          ElectionYear = 2023, ElectionType = "Runoff")
-#View(voter_turnout2023_runoff)
+voter_turnout2023 <- bind_rows(voter_turnout2023_general, voter_turnout2023_runoff)
 
 # Combine voter turnout datasets
-all_voter_turnout <- bind_rows(voter_turnout2023_general, voter_turnout2023_runoff)
-#View(all_voter_turnout)
+all_voter_turnout <- bind_rows(voter_turnout_2021, voter_turnout2023)
+
 
 # Precinct checks
 precinct_district_clean <- read_csv("precinct_district_clean.csv")
@@ -258,16 +282,41 @@ ui <- dashboardPage(
 ######################################################################################
 ## Server ##
 server <- function(input, output, session) {
-  # Debugging input$electionType
-  observe({
-    print(paste("Selected ElectionType:", input$electionType))
+  # Reactive selection of district shapefile
+  selected_districts <- reactive({
+    if (input$electionYear == 2021) {
+      validate(need(!is.null(old_districts), "Old district shapefile not loaded"))
+      old_districts
+    } else {
+      validate(need(!is.null(districts), "new districts shp not loaded"))
+      districts
+    }
+  })
+  
+  # Join precincts with selected districts
+  # Join precincts with the selected districts
+  precincts_with_districts <- reactive({
+    validate(need(!is.null(selected_districts()), "District shapefile not found."))
+    st_join(precincts, selected_districts(), join = st_within) %>%
+      filter(!is.na(District))
+  })
+  
+  # Filter election results based on user input
+  filtered_election_data <- reactive({
+    validate(need(!is.null(all_elections), "Election data not loaded."))
+    all_elections %>%
+      filter(ElectionYear == input$electionYear, ElectionType == input$electionType)
+  })
+  
+  # Filter voter turnout data based on user input
+  filtered_turnout_data <- reactive({
+    validate(need(!is.null(all_voter_turnout), "Voter turnout data not loaded."))
+    all_voter_turnout %>%
+      filter(ElectionYear == input$electionYear, ElectionType == input$electionType)
   })
   
   # Mayor's Table
   filteredMayorTableData <- reactive({
-    print("Available ElectionType values in dataset:")
-    print(unique(all_elections$ElectionType))
-    
     mayor_data <- all_elections %>%
       filter(Race == 'Mayor', ElectionYear == input$electionYear, ElectionType == input$electionType) %>%
       group_by(Candidate) %>%

@@ -82,8 +82,12 @@ voter_turnout2023 <- bind_rows(voter_turnout2023_general, voter_turnout2023_runo
 
 # Combine voter turnout datasets
 all_voter_turnout <- bind_rows(voter_turnout_2021, voter_turnout2023)
-
-
+all_voter_turnout <- all_voter_turnout %>%
+  left_join(
+    precincts %>% select(NAME, District),
+    by = c("Precinct" = "NAME")
+  )
+#View(all_voter_turnout)
 # Precinct checks
 precinct_district_clean <- read_csv("precinct_district_clean.csv")
 
@@ -200,7 +204,9 @@ ui <- dashboardPage(
         selectInput("turnoutDistrict", "Select Council District:",
                     choices = c("All", unique(districts$District)),
                     selected = "All")
-      )
+      ),
+      menuItem("Voter Turnout by Year", tabName = "turnout_year",
+               icon = icon("table"))
     )
   ),
   dashboardBody(
@@ -273,6 +279,18 @@ ui <- dashboardPage(
             solidHeader = TRUE,
             width = 12,
             dataTableOutput("turnoutTable")
+          )
+        )
+      ),
+      tabItem(
+        tabName = "turnout_year",
+        fluidRow(
+          box(
+            title = "Voter Turnout by Year",
+            status = "info",
+            solidHeader = TRUE,
+            width = 12,
+            dataTableOutput("turnoutComparisonTable")
           )
         )
       )
@@ -700,6 +718,45 @@ server <- function(input, output, session) {
     return(html)
     
   }
+  
+  turnout_comparison_data <- reactive({
+    turnout_2021 <- all_voter_turnout %>%
+      filter(ElectionYear == 2021) %>%
+      select(Precinct, District, `Registered Voters`, `Ballots Cast`, `Voter Turnout (%)`) %>%
+      rename(
+        `Registered Voters 2021` = `Registered Voters`,
+        `Ballots Cast 2021` = `Ballots Cast`,
+        `Voter Turnout 2021 (%)` = `Voter Turnout (%)`
+      )
+    
+    turnout_2023 <- all_voter_turnout %>%
+      filter(ElectionYear == 2023) %>%
+      select(Precinct, District, `Registered Voters`, `Ballots Cast`, `Voter Turnout (%)`) %>%
+      rename(
+        `Registered Voters 2023` = `Registered Voters`,
+        `Ballots Cast 2023` = `Ballots Cast`,
+        `Voter Turnout 2023 (%)` = `Voter Turnout (%)`
+      )
+    
+    # Join 2021 and 2023 data
+    comparison <- turnout_2021 %>%
+      full_join(turnout_2023, by = c("Precinct", "District")) %>%
+      mutate(
+        `Difference in Ballots Cast` = `Ballots Cast 2023` - `Ballots Cast 2021`,
+        `Difference in Voter Turnout (%)` = round((`Voter Turnout 2023 (%)` - `Voter Turnout 2021 (%)`)*100,2),
+        `Voter Turnout 2021 (%)` = `Voter Turnout 2021 (%)` * 100,
+        `Voter Turnout 2023 (%)` = `Voter Turnout 2023 (%)` * 100
+      )
+    
+    comparison
+  })
+  
+  output$turnoutComparisonTable <- renderDataTable({
+    validate(need(turnout_comparison_data(), "No turnout data available for comparison."))
+    turnout_comparison_data()
+  })
+  
+ 
 }
 
 shinyApp(ui, server)
